@@ -1,14 +1,18 @@
 import ProductCard from "@/components/ProductCard";
 import { connectToDatabase } from "@/lib/db";
 import { Product } from "@/models/Product";
+import { SiteSettings } from "@/models/SiteSettings";
+import Hero from "@/components/Hero";
 
 export const dynamic = "force-dynamic";
 
 export default async function ProductsPage() {
   let products: unknown[] = [];
+  let settings: { productsHeroImageUrl?: string; productsHeroHeadline?: string; productsHeroTagline?: string } | null = null;
   try {
     if (process.env.MONGODB_URI) {
       await connectToDatabase();
+      settings = await SiteSettings.findOne().lean<{ productsHeroImageUrl?: string; productsHeroHeadline?: string; productsHeroTagline?: string }>();
       const raw = await Product.find().sort({ createdAt: -1 }).lean();
       products = raw.map((p) => {
         const r = p as unknown as Record<string, unknown>;
@@ -20,7 +24,11 @@ export default async function ProductsPage() {
   }
 
   return (
-    <div className="space-y-8 mt-8 sm:mt-10">
+    <div className="space-y-8">
+      {settings?.productsHeroImageUrl || settings?.productsHeroHeadline || settings?.productsHeroTagline ? (
+        <Hero imageUrl={settings?.productsHeroImageUrl} headline={settings?.productsHeroHeadline} tagline={settings?.productsHeroTagline} align="center" height="short" showCta={false} />
+      ) : null}
+      <div className="mt-8 sm:mt-10" />
       <div className="flex items-end justify-between gap-4">
         <div>
           <h1 className="lux-heading text-2xl sm:text-3xl font-semibold tracking-tight heading-underline">All Products</h1>

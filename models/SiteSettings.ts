@@ -8,6 +8,10 @@ export interface ISiteSettings {
   hero2Tagline?: string;
   heroImagePublicId?: string;
   hero2ImagePublicId?: string;
+  productsHeroImageUrl?: string;
+  productsHeroHeadline?: string;
+  productsHeroTagline?: string;
+  productsHeroImagePublicId?: string;
 }
 
 const SiteSettingsSchema = new Schema<ISiteSettings>(
@@ -19,6 +23,10 @@ const SiteSettingsSchema = new Schema<ISiteSettings>(
     hero2Tagline: String,
   heroImagePublicId: String,
   hero2ImagePublicId: String,
+  productsHeroImageUrl: String,
+  productsHeroHeadline: String,
+  productsHeroTagline: String,
+  productsHeroImagePublicId: String,
   },
   { timestamps: true }
 );

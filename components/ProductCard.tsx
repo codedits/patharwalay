@@ -39,15 +39,25 @@ export default function ProductCard({ product }: { product: unknown }) {
         ) : (
           <div className="bg-gray-50 dark:bg-white/5 w-full h-full flex items-center justify-center text-muted">No image</div>
         )}
-        <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity text-white/90 text-xs bg-black/40 backdrop-blur px-1.5 py-0.5 rounded">View →</div>
-      </div>
-  <div className="p-3 sm:p-4">
-        <div className="flex items-start justify-between gap-3">
-          <h3 className="lux-heading font-medium tracking-tight text-base sm:text-lg group-hover:opacity-90 transition-opacity">{title}</h3>
-          {(p as DBProduct).onSale ? <span className="badge badge-sale">SALE</span> : (p as DBProduct).inStock === false ? <span className="badge badge-out">OUT</span> : null}
+        {/* Gradient overlay */}
+        <div className="pointer-events-none absolute inset-0">
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent group-hover:from-black/80 group-hover:via-black/30 transition-colors" />
+          {/* Badges top-left */}
+          {(p as DBProduct).onSale ? (
+            <span className="absolute top-2 left-2 badge badge-sale">SALE</span>
+          ) : (p as DBProduct).inStock === false ? (
+            <span className="absolute top-2 left-2 badge badge-out">OUT</span>
+          ) : null}
+          {/* View hint top-right on hover */}
+          <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity text-white/90 text-xs bg-black/40 backdrop-blur px-1.5 py-0.5 rounded">View →</div>
+          {/* Title & price bottom */}
+          <div className="absolute inset-x-0 bottom-0 p-3 sm:p-4 text-white">
+            <div className="flex items-start justify-between gap-3">
+              <h3 className="lux-heading font-medium tracking-tight text-base sm:text-lg truncate drop-shadow-[0_1px_6px_rgba(0,0,0,0.6)]">{title}</h3>
+            </div>
+            <p className="mt-1 text-[13px] font-semibold drop-shadow-[0_1px_6px_rgba(0,0,0,0.7)]">{formatPKR(price)}</p>
+          </div>
         </div>
-        <div className="mt-2 h-px bg-black/10 dark:bg-white/10" />
-        <p className="mt-2 text-[13px] font-semibold text-foreground">{formatPKR(price)}</p>
       </div>
   </motion.a>
   );

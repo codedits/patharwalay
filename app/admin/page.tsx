@@ -36,6 +36,10 @@ type Settings = {
   hero2Tagline?: string;
   heroImagePublicId?: string;
   hero2ImagePublicId?: string;
+  productsHeroImageUrl?: string;
+  productsHeroHeadline?: string;
+  productsHeroTagline?: string;
+  productsHeroImagePublicId?: string;
 };
 
 export default function AdminPage() {
@@ -52,6 +56,8 @@ export default function AdminPage() {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadingTotal, setUploadingTotal] = useState(0);
   const [uploadingDone, setUploadingDone] = useState(0);
+  // Accordion state for Site Settings panels
+  const [openSettingsPanel, setOpenSettingsPanel] = useState<"home" | "second" | "products" | null>("home");
   // Keep a separate string state for price so users can freely type
   const [priceInput, setPriceInput] = useState<string>("");
 
@@ -335,71 +341,210 @@ export default function AdminPage() {
               </div>
             </section>
           ) : (
-            <section className="max-w-6xl mx-auto grid gap-5 md:grid-cols-2 items-start">
-              {/* Hero 1 settings */}
-              <div className="rounded-xl border border-black/10 dark:border-white/10 p-5 bg-white/5 dark:bg-white/5 shadow-sm space-y-3">
-                <div className="text-sm font-medium">Homepage hero</div>
-                <label className="block text-xs text-muted">Headline</label>
-                <input value={settings?.heroHeadline || ""} onChange={(e) => setSettings((prev) => ({ ...(prev || {}), heroHeadline: e.target.value }))} placeholder="Elegant gemstones, modern designs" className="w-full rounded-md border px-3 py-2" />
-                <div className="text-xs text-muted">Shown at the top of the homepage.</div>
-              </div>
-              <div className="rounded-xl border border-black/10 dark:border-white/10 p-5 bg-white/5 dark:bg-white/5 shadow-sm">
-                <div className="text-sm font-medium mb-2">Hero image</div>
-                <div className="relative rounded-lg overflow-hidden border border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/10 aspect-[16/9]">
-                  {settings?.heroImageUrl ? (
-                    <Image src={polishImageUrl(settings.heroImageUrl, ["c_fill", "g_auto", "w_760", "h_428"]) } alt="Hero" fill className="object-cover" sizes="(max-width: 768px) 100vw, 380px" />
-                  ) : (
-                    <div className="absolute inset-0 flex items-center justify-center text-sm text-muted">No image</div>
-                  )}
+            <section className="max-w-6xl mx-auto space-y-4 sm:space-y-6">
+              {/* Homepage hero section */}
+              <div className="rounded-xl border border-black/10 dark:border-white/10 bg-white/5 dark:bg-white/5 shadow-sm">
+                <button
+                  type="button"
+                  className="w-full flex items-center justify-between px-5 py-4"
+                  onClick={() => setOpenSettingsPanel(openSettingsPanel === "home" ? null : "home")}
+                  aria-expanded={openSettingsPanel === "home"}
+                >
+                  <div className="text-left">
+                    <div className="text-sm font-medium">Homepage hero</div>
+                    <p className="text-xs text-muted mt-1">Shown at the top of the homepage.</p>
+                  </div>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={`transition-transform ${openSettingsPanel === "home" ? "rotate-180" : ""}`} aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+                </button>
+                <div className={`${openSettingsPanel === "home" ? "p-5 grid gap-5 md:grid-cols-2 items-start" : "hidden"}`}>
+                  <div className="space-y-3">
+                    <label className="block text-xs text-muted">Headline</label>
+                    <input value={settings?.heroHeadline || ""} onChange={(e) => setSettings((prev) => ({ ...(prev || {}), heroHeadline: e.target.value }))} placeholder="Elegant gemstones, modern designs" className="w-full rounded-md border px-3 py-2" />
+                  </div>
+                  <div>
+                    <div className="text-xs text-muted mb-2">Hero image</div>
+                    <div className="relative rounded-lg overflow-hidden border border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/10 aspect-[16/9]">
+                      {settings?.heroImageUrl ? (
+                        <Image src={polishImageUrl(settings.heroImageUrl, ["c_fill", "g_auto", "w_760", "h_428"]) } alt="Hero" fill className="object-cover" sizes="(max-width: 768px) 100vw, 380px" />
+                      ) : (
+                        <div className="absolute inset-0 flex items-center justify-center text-sm text-muted">No image</div>
+                      )}
+                    </div>
+                    <input type="file" accept="image/*" onChange={async (e) => {
+                      const f = e.target.files?.[0];
+                      if (!f) return;
+                      try {
+                        const { url, publicId } = await uploadMediaFile(f);
+                        if (url) {
+                          setSettings((prev) => ({ ...(prev || {}), heroImageUrl: url, heroImagePublicId: publicId }));
+                          await fetch("/api/settings", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...(settings || {}), heroImageUrl: url, heroImagePublicId: publicId }) });
+                        }
+                      } catch (err) {
+                        console.error("Hero upload failed", err);
+                        alert("Hero image upload failed");
+                      }
+                    }} className="mt-3 text-sm" />
+                    {settings?.heroImageUrl ? (
+                      <div className="mt-2 flex gap-2">
+                        <button
+                          type="button"
+                          aria-label="Delete image"
+                          title="Delete image"
+                          className="inline-flex items-center rounded p-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10"
+                          onClick={async () => {
+                            const next = { ...(settings || {}), heroImageUrl: "", heroImagePublicId: "" } as Settings;
+                            setSettings(next);
+                            await fetch("/api/settings", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(next) });
+                          }}
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                            <path d="M14.74 9l-.346 9M9.61 18l-.35-9M4.77 5.79l1.07 13.882A2.25 2.25 0 0 0 8.083 21.75h7.834a2.25 2.25 0 0 0 2.244-2.078L19.16 5.79" />
+                            <path d="M9.5 4.334A2.167 2.167 0 0 1 11.667 2.25h.666A2.167 2.167 0 0 1 14.5 4.334V5.25m-9.728.54a48.11 48.11 0 0 1 3.478-.398m0 0a48.667 48.667 0 0 1 7.5 0m0 0c.34.029.68.062 1.022.1M4.772 5.79c.34-.059.68-.114 1.022-.165m9.978.265c.342.052.682.107 1.022.166" />
+                            <path d="M3.5 5.25h17" />
+                          </svg>
+                        </button>
+                      </div>
+                    ) : null}
+                  </div>
                 </div>
-                <input type="file" accept="image/*" onChange={async (e) => {
-                  const f = e.target.files?.[0];
-                  if (!f) return;
-                  try {
-                    const { url, publicId } = await uploadMediaFile(f);
-                    if (url) {
-                      setSettings((prev) => ({ ...(prev || {}), heroImageUrl: url, heroImagePublicId: publicId }));
-                      await fetch("/api/settings", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...(settings || {}), heroImageUrl: url, heroImagePublicId: publicId }) });
-                    }
-                  } catch (err) {
-                    console.error("Hero upload failed", err);
-                    alert("Hero image upload failed");
-                  }
-                }} className="mt-3 text-sm" />
               </div>
 
-              {/* Hero 2 settings */}
-              <div className="rounded-xl border border-black/10 dark:border-white/10 p-5 bg-white/5 dark:bg-white/5 shadow-sm space-y-3">
-                <div className="text-sm font-medium">Second hero</div>
-                <label className="block text-xs text-muted">Headline</label>
-                <input value={settings?.hero2Headline || ""} onChange={(e) => setSettings((prev) => ({ ...(prev || {}), hero2Headline: e.target.value }))} placeholder="Discover rare stones" className="w-full rounded-md border px-3 py-2" />
-                <label className="block text-xs text-muted mt-3">Tagline</label>
-                <input value={settings?.hero2Tagline || ""} onChange={(e) => setSettings((prev) => ({ ...(prev || {}), hero2Tagline: e.target.value }))} placeholder="Curated selections, new each week" className="w-full rounded-md border px-3 py-2" />
-                <div className="text-xs text-muted">Shown below the featured products section.</div>
-              </div>
-              <div className="rounded-xl border border-black/10 dark:border-white/10 p-5 bg-white/5 dark:bg-white/5 shadow-sm">
-                <div className="text-sm font-medium mb-2">Second hero image</div>
-                <div className="relative rounded-lg overflow-hidden border border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/10 aspect-[16/9]">
-                  {settings?.hero2ImageUrl ? (
-                    <Image src={polishImageUrl(settings.hero2ImageUrl, ["c_fill", "g_auto", "w_760", "h_428"]) } alt="Second Hero" fill className="object-cover" sizes="(max-width: 768px) 100vw, 380px" />
-                  ) : (
-                    <div className="absolute inset-0 flex items-center justify-center text-sm text-muted">No image</div>
-                  )}
+              {/* Second hero section */}
+              <div className="rounded-xl border border-black/10 dark:border-white/10 bg-white/5 dark:bg-white/5 shadow-sm">
+                <button
+                  type="button"
+                  className="w-full flex items-center justify-between px-5 py-4"
+                  onClick={() => setOpenSettingsPanel(openSettingsPanel === "second" ? null : "second")}
+                  aria-expanded={openSettingsPanel === "second"}
+                >
+                  <div className="text-left">
+                    <div className="text-sm font-medium">Second hero</div>
+                    <p className="text-xs text-muted mt-1">Shown below the featured products section.</p>
+                  </div>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={`transition-transform ${openSettingsPanel === "second" ? "rotate-180" : ""}`} aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+                </button>
+                <div className={`${openSettingsPanel === "second" ? "p-5 grid gap-5 md:grid-cols-2 items-start" : "hidden"}`}>
+                  <div className="space-y-3">
+                    <label className="block text-xs text-muted">Headline</label>
+                    <input value={settings?.hero2Headline || ""} onChange={(e) => setSettings((prev) => ({ ...(prev || {}), hero2Headline: e.target.value }))} placeholder="Discover rare stones" className="w-full rounded-md border px-3 py-2" />
+                    <label className="block text-xs text-muted">Tagline</label>
+                    <input value={settings?.hero2Tagline || ""} onChange={(e) => setSettings((prev) => ({ ...(prev || {}), hero2Tagline: e.target.value }))} placeholder="Curated selections, new each week" className="w-full rounded-md border px-3 py-2" />
+                  </div>
+                  <div>
+                    <div className="text-xs text-muted mb-2">Second hero image</div>
+                    <div className="relative rounded-lg overflow-hidden border border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/10 aspect-[16/9]">
+                      {settings?.hero2ImageUrl ? (
+                        <Image src={polishImageUrl(settings.hero2ImageUrl, ["c_fill", "g_auto", "w_760", "h_428"]) } alt="Second Hero" fill className="object-cover" sizes="(max-width: 768px) 100vw, 380px" />
+                      ) : (
+                        <div className="absolute inset-0 flex items-center justify-center text-sm text-muted">No image</div>
+                      )}
+                    </div>
+                    <input type="file" accept="image/*" onChange={async (e) => {
+                      const f = e.target.files?.[0];
+                      if (!f) return;
+                      try {
+                        const { url, publicId } = await uploadMediaFile(f);
+                        if (url) {
+                          setSettings((prev) => ({ ...(prev || {}), hero2ImageUrl: url, hero2ImagePublicId: publicId }));
+                          await fetch("/api/settings", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...(settings || {}), hero2ImageUrl: url, hero2ImagePublicId: publicId }) });
+                        }
+                      } catch (err) {
+                        console.error("Second hero upload failed", err);
+                        alert("Second hero image upload failed");
+                      }
+                    }} className="mt-3 text-sm" />
+                    {settings?.hero2ImageUrl ? (
+                      <div className="mt-2 flex gap-2">
+                        <button
+                          type="button"
+                          aria-label="Delete image"
+                          title="Delete image"
+                          className="inline-flex items-center rounded p-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10"
+                          onClick={async () => {
+                            const next = { ...(settings || {}), hero2ImageUrl: "", hero2ImagePublicId: "" } as Settings;
+                            setSettings(next);
+                            await fetch("/api/settings", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(next) });
+                          }}
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                            <path d="M14.74 9l-.346 9M9.61 18l-.35-9M4.77 5.79l1.07 13.882A2.25 2.25 0 0 0 8.083 21.75h7.834a2.25 2.25 0 0 0 2.244-2.078L19.16 5.79" />
+                            <path d="M9.5 4.334A2.167 2.167 0 0 1 11.667 2.25h.666A2.167 2.167 0 0 1 14.5 4.334V5.25m-9.728.54a48.11 48.11 0 0 1 3.478-.398m0 0a48.667 48.667 0 0 1 7.5 0m0 0c.34.029.68.062 1.022.1M4.772 5.79c.34-.059.68-.114 1.022-.165m9.978.265c.342.052.682.107 1.022.166" />
+                            <path d="M3.5 5.25h17" />
+                          </svg>
+                        </button>
+                      </div>
+                    ) : null}
+                  </div>
                 </div>
-                <input type="file" accept="image/*" onChange={async (e) => {
-                  const f = e.target.files?.[0];
-                  if (!f) return;
-                  try {
-                    const { url, publicId } = await uploadMediaFile(f);
-                    if (url) {
-                      setSettings((prev) => ({ ...(prev || {}), hero2ImageUrl: url, hero2ImagePublicId: publicId }));
-                      await fetch("/api/settings", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...(settings || {}), hero2ImageUrl: url, hero2ImagePublicId: publicId }) });
-                    }
-                  } catch (err) {
-                    console.error("Second hero upload failed", err);
-                    alert("Second hero image upload failed");
-                  }
-                }} className="mt-3 text-sm" />
+              </div>
+
+              {/* Products page hero section */}
+              <div className="rounded-xl border border-black/10 dark:border-white/10 bg-white/5 dark:bg-white/5 shadow-sm">
+                <button
+                  type="button"
+                  className="w-full flex items-center justify-between px-5 py-4"
+                  onClick={() => setOpenSettingsPanel(openSettingsPanel === "products" ? null : "products")}
+                  aria-expanded={openSettingsPanel === "products"}
+                >
+                  <div className="text-left">
+                    <div className="text-sm font-medium">Products page hero</div>
+                    <p className="text-xs text-muted mt-1">Shown at the top of the products page.</p>
+                  </div>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={`transition-transform ${openSettingsPanel === "products" ? "rotate-180" : ""}`} aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+                </button>
+                <div className={`${openSettingsPanel === "products" ? "p-5 grid gap-5 md:grid-cols-2 items-start" : "hidden"}`}>
+                  <div className="space-y-3">
+                    <label className="block text-xs text-muted">Headline</label>
+                    <input value={settings?.productsHeroHeadline || ""} onChange={(e) => setSettings((prev) => ({ ...(prev || {}), productsHeroHeadline: e.target.value }))} placeholder="Explore our full collection" className="w-full rounded-md border px-3 py-2" />
+                    <label className="block text-xs text-muted">Tagline</label>
+                    <input value={settings?.productsHeroTagline || ""} onChange={(e) => setSettings((prev) => ({ ...(prev || {}), productsHeroTagline: e.target.value }))} placeholder="Handpicked gems and designs" className="w-full rounded-md border px-3 py-2" />
+                  </div>
+                  <div>
+                    <div className="text-xs text-muted mb-2">Products hero image</div>
+                    <div className="relative rounded-lg overflow-hidden border border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/10 aspect-[16/9]">
+                      {settings?.productsHeroImageUrl ? (
+                        <Image src={polishImageUrl(settings.productsHeroImageUrl, ["c_fill", "g_auto", "w_760", "h_428"]) } alt="Products Hero" fill className="object-cover" sizes="(max-width: 768px) 100vw, 380px" />
+                      ) : (
+                        <div className="absolute inset-0 flex items-center justify-center text-sm text-muted">No image</div>
+                      )}
+                    </div>
+                    <input type="file" accept="image/*" onChange={async (e) => {
+                      const f = e.target.files?.[0];
+                      if (!f) return;
+                      try {
+                        const { url, publicId } = await uploadMediaFile(f);
+                        if (url) {
+                          setSettings((prev) => ({ ...(prev || {}), productsHeroImageUrl: url, productsHeroImagePublicId: publicId }));
+                          await fetch("/api/settings", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...(settings || {}), productsHeroImageUrl: url, productsHeroImagePublicId: publicId }) });
+                        }
+                      } catch (err) {
+                        console.error("Products hero upload failed", err);
+                        alert("Products hero image upload failed");
+                      }
+                    }} className="mt-3 text-sm" />
+                    {settings?.productsHeroImageUrl ? (
+                      <div className="mt-2 flex gap-2">
+                        <button
+                          type="button"
+                          aria-label="Delete image"
+                          title="Delete image"
+                          className="inline-flex items-center rounded p-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10"
+                          onClick={async () => {
+                            const next = { ...(settings || {}), productsHeroImageUrl: "", productsHeroImagePublicId: "" } as Settings;
+                            setSettings(next);
+                            await fetch("/api/settings", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(next) });
+                          }}
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                            <path d="M14.74 9l-.346 9M9.61 18l-.35-9M4.77 5.79l1.07 13.882A2.25 2.25 0 0 0 8.083 21.75h7.834a2.25 2.25 0 0 0 2.244-2.078L19.16 5.79" />
+                            <path d="M9.5 4.334A2.167 2.167 0 0 1 11.667 2.25h.666A2.167 2.167 0 0 1 14.5 4.334V5.25m-9.728.54a48.11 48.11 0 0 1 3.478-.398m0 0a48.667 48.667 0 0 1 7.5 0m0 0c.34.029.68.062 1.022.1M4.772 5.79c.34-.059.68-.114 1.022-.165m9.978.265c.342.052.682.107 1.022.166" />
+                            <path d="M3.5 5.25h17" />
+                          </svg>
+                        </button>
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
               </div>
             </section>
           )}

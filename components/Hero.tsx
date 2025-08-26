@@ -4,7 +4,12 @@ import { polishImageUrl } from "@/lib/images";
 import Link from "next/link";
 import { motion } from "framer-motion";
 
-export default function Hero({ imageUrl, headline, tagline, showCta = true, align = "left", size = "default" }: { imageUrl?: string; headline?: string; tagline?: string; showCta?: boolean; align?: "left" | "center"; size?: "default" | "lg" }) {
+export default function Hero({ imageUrl, headline, tagline, showCta = true, align = "left", size = "default", height = "normal" }: { imageUrl?: string; headline?: string; tagline?: string; showCta?: boolean; align?: "left" | "center"; size?: "default" | "lg"; height?: "short" | "normal" | "tall" }) {
+  const heightClass = height === "short"
+    ? "h-[32vh] sm:h-[40vh] md:h-[44vh]"
+    : height === "tall"
+    ? "h-[64vh] sm:h-[72vh] md:h-[78vh]"
+    : "h-[48vh] sm:h-[56vh] md:h-[64vh]";
   return (
     <section className="relative overflow-hidden full-bleed border-b border-black/10 dark:border-white/10">
     {imageUrl ? (
@@ -15,10 +20,10 @@ export default function Hero({ imageUrl, headline, tagline, showCta = true, alig
           height={720}
           priority
           sizes="100vw"
-          className="h-[48vh] sm:h-[56vh] md:h-[64vh] w-full object-cover"
+          className={`${heightClass} w-full object-cover`}
         />
       ) : (
-        <div className="h-[48vh] sm:h-[56vh] md:h-[64vh] w-full bg-background" />
+        <div className={`${heightClass} w-full bg-background`} />
       )}
       <div className="pointer-events-none absolute inset-0 bg-black/30 dark:bg-black/50" />
   <div className={align === "center" ? "absolute inset-0 flex items-center" : "absolute inset-x-0 bottom-0"}>
