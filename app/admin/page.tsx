@@ -1,0 +1,529 @@
+"use client";
+import React, { useEffect, useMemo, useState } from "react";
+import { formatPKR } from "@/lib/currency";
+import Image from "next/image";
+import { polishImageUrl } from "@/lib/images";
+
+type Item = {
+  _id?: string;
+  title: string;
+  description?: string;
+  slug?: string;
+  price: number;
+  imageUrl?: string;
+  images?: string[];
+  onSale?: boolean;
+  inStock?: boolean;
+  createdAt?: string | number | Date;
+};
+
+type ProductForm = {
+  _id?: string;
+  title: string;
+  description?: string;
+  price: number;
+  imageUrl?: string;
+  images?: string[];
+  onSale?: boolean;
+  inStock?: boolean;
+};
+
+type Settings = {
+  heroImageUrl?: string;
+  heroHeadline?: string;
+  hero2ImageUrl?: string;
+  hero2Headline?: string;
+  hero2Tagline?: string;
+  heroImagePublicId?: string;
+  hero2ImagePublicId?: string;
+};
+
+export default function AdminPage() {
+  const [active, setActive] = useState<"products" | "settings">("products");
+  const [items, setItems] = useState<Item[]>([]);
+  const [query, setQuery] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [showModal, setShowModal] = useState<boolean>(false);
+  const [settings, setSettings] = useState<Settings | null>(null);
+  const [settingsSaving, setSettingsSaving] = useState(false);
+  const [form, setForm] = useState<ProductForm>({ title: "", description: "", price: 0, imageUrl: "", images: [], inStock: true, onSale: false });
+  const [sortBy, setSortBy] = useState<"title-asc" | "title-desc" | "newest" | "oldest" | "price-asc" | "price-desc">("title-asc");
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadingTotal, setUploadingTotal] = useState(0);
+  const [uploadingDone, setUploadingDone] = useState(0);
+  // Keep a separate string state for price so users can freely type
+  const [priceInput, setPriceInput] = useState<string>("");
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch("/api/products");
+        const data = await res.json();
+        setItems(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error(err);
+      }
+      try {
+        const sres = await fetch("/api/settings");
+        const sdata = await sres.json();
+        setSettings(sdata || {});
+      } catch (err) {
+        console.error("Failed to load settings", err);
+      }
+    })();
+  }, []);
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return items;
+    return items.filter((it) => it.title.toLowerCase().includes(q));
+  }, [items, query]);
+
+  const sorted = useMemo(() => {
+    const list = [...filtered];
+    switch (sortBy) {
+      case "title-desc":
+        list.sort((a, b) => b.title.localeCompare(a.title));
+        break;
+      case "newest":
+        // Fallback to _id string compare if createdAt not present
+        list.sort((a: Item, b: Item) => {
+          const toMs = (c?: string | number | Date) => {
+            if (c == null) return 0;
+            if (typeof c === "number") return c;
+            if (typeof c === "string") return new Date(c).getTime();
+            if (c instanceof Date) return c.getTime();
+            return 0;
+          };
+          const ad = toMs(a.createdAt);
+          const bd = toMs(b.createdAt);
+          return bd - ad;
+        });
+        break;
+      case "oldest":
+        list.sort((a: Item, b: Item) => {
+          const toMs = (c?: string | number | Date) => {
+            if (c == null) return 0;
+            if (typeof c === "number") return c;
+            if (typeof c === "string") return new Date(c).getTime();
+            if (c instanceof Date) return c.getTime();
+            return 0;
+          };
+          const ad = toMs(a.createdAt);
+          const bd = toMs(b.createdAt);
+          return ad - bd;
+        });
+        break;
+      case "price-asc":
+        list.sort((a, b) => a.price - b.price);
+        break;
+      case "price-desc":
+        list.sort((a, b) => b.price - a.price);
+        break;
+      case "title-asc":
+      default:
+        list.sort((a, b) => a.title.localeCompare(b.title));
+    }
+    return list;
+  }, [filtered, sortBy]);
+
+  async function uploadMediaFile(file: File) {
+    const fd = new FormData();
+    fd.append("file", file);
+    const res = await fetch("/api/upload", { method: "POST", body: fd });
+    const data = await res.json();
+    if (!res.ok) {
+      const err = (data && (data.error || data.message)) ? (data.error || data.message) : `Upload failed with status ${res.status}`;
+      throw new Error(String(err));
+    }
+    const url = data.secure_url || data.url || data.secureUrl || "";
+    const publicId = (data.raw && (data.raw.public_id as string)) || undefined;
+    return { url, publicId };
+  }
+
+  function resetForm() {
+    setForm({ title: "", description: "", price: 0, imageUrl: "", images: [], inStock: true, onSale: false });
+    setEditingId(null);
+  setPriceInput("");
+  }
+
+  function editItem(it: Item) {
+    setForm({
+      _id: it._id,
+      title: it.title,
+      description: it.description,
+      price: it.price,
+      imageUrl: it.imageUrl || (it.images && it.images[0]) || "",
+      images: it.images || (it.imageUrl ? [it.imageUrl] : []),
+      onSale: it.onSale ?? false,
+      inStock: it.inStock ?? true,
+    });
+  setPriceInput(String(it.price ?? ""));
+    setEditingId(it._id || null);
+  setShowModal(true);
+  }
+
+  async function remove(id?: string) {
+    if (!id) return;
+    if (!confirm("Delete this product?")) return;
+    await fetch(`/api/products/${id}`, { method: "DELETE" });
+    const res = await fetch("/api/products");
+    const data = await res.json();
+    setItems(Array.isArray(data) ? data : []);
+  }
+
+  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setLoading(true);
+    try {
+  const parsedPrice = Number.parseInt(priceInput || "0", 10);
+      const primary = form.imageUrl || (form.images && form.images[0]) || "";
+      const uniqueImages = Array.from(new Set([...(form.images || [])])).slice(0, 7);
+  const body = { ...form, price: Number.isFinite(parsedPrice) ? parsedPrice : 0, imageUrl: primary, images: uniqueImages };
+      if (editingId) {
+        await fetch(`/api/products/${editingId}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+      } else {
+        await fetch(`/api/products`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+      }
+      resetForm();
+  setShowModal(false);
+      const res = await fetch("/api/products");
+      const data = await res.json();
+      setItems(Array.isArray(data) ? data : []);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="">
+      <div className="min-h-screen grid md:grid-cols-[220px_1fr]">
+      {/* Sidebar */}
+  <aside className="hidden md:flex flex-col border-r border-black/10 dark:border-white/10">
+        <div className="h-16 flex items-center px-3 border-b">
+          <div className="text-lg font-semibold tracking-tight">Store Admin</div>
+        </div>
+        <nav className="px-2 py-3 space-y-1">
+          <button onClick={() => setActive("products")} className={`w-full text-left px-3 py-2 rounded-md transition ${active === "products" ? "bg-black text-white dark:bg-white dark:text-black" : "hover:bg-black/5 dark:hover:bg-white/10"}`}>Products</button>
+          <button onClick={() => setActive("settings")} className={`w-full text-left px-3 py-2 rounded-md transition ${active === "settings" ? "bg-black text-white dark:bg-white dark:text-black" : "hover:bg-black/5 dark:hover:bg-white/10"}`}>Site Settings</button>
+        </nav>
+        <div className="mt-auto p-4 text-xs text-muted">v0.1 • Next.js Admin</div>
+      </aside>
+
+    {/* Main */}
+  <main className="flex-1 flex flex-col">
+        {/* Header */}
+  <header className="sticky top-0 z-10 h-16 border-b border-black/10 dark:border-white/10 bg-white/70 dark:bg-black/30 backdrop-blur supports-[backdrop-filter]:bg-white/40 flex items-center px-4 gap-3">
+          <div className="md:hidden text-base font-semibold">Admin</div>
+          <div className="relative flex-1 max-w-xl">
+            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={active === "products" ? "Search products" : "Search settings"} className="w-full rounded-md border px-3 py-2 pl-9" />
+            <span className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-muted">🔎</span>
+          </div>
+      {active === "products" ? (
+            <div className="flex items-center gap-2">
+        <select value={sortBy} onChange={(e) => setSortBy(e.target.value as typeof sortBy)} className="rounded-md border px-2 py-2 text-sm hidden sm:block">
+                <option value="title-asc">Title A–Z</option>
+                <option value="title-desc">Title Z–A</option>
+                <option value="newest">Newest</option>
+                <option value="oldest">Oldest</option>
+                <option value="price-asc">Price: Low → High</option>
+                <option value="price-desc">Price: High → Low</option>
+              </select>
+              <button className="btn-primary" onClick={() => { resetForm(); setShowModal(true); }}>Add product</button>
+            </div>
+          ) : (
+            <button className="btn-outline" onClick={async () => {
+              try {
+                setSettingsSaving(true);
+                const res = await fetch("/api/settings", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(settings || {}) });
+                const s = await res.json();
+                setSettings(s || {});
+              } finally {
+                setSettingsSaving(false);
+              }
+            }}>{settingsSaving ? "Saving..." : "Save"}</button>
+          )}
+        </header>
+        {/* Mobile tabs for navigation */}
+        <div className="md:hidden border-b border-black/10 dark:border-white/10 px-4 py-2 flex gap-2 bg-background sticky top-16 z-10">
+          <button
+            className={`px-3 py-1.5 rounded-md text-sm ${active === "products" ? "bg-black text-white dark:bg-white dark:text-black" : "border border-black/10 dark:border-white/10"}`}
+            onClick={() => setActive("products")}
+          >
+            Products
+          </button>
+          <button
+            className={`px-3 py-1.5 rounded-md text-sm ${active === "settings" ? "bg-black text-white dark:bg-white dark:text-black" : "border border-black/10 dark:border-white/10"}`}
+            onClick={() => setActive("settings")}
+          >
+            Settings
+          </button>
+        </div>
+  {/* Content */}
+  <div className="p-4 sm:p-6">
+            {active === "products" ? (
+            <section className="space-y-4">
+              {/* Mobile list view */}
+              <div className="md:hidden grid gap-3">
+                {sorted.map((it) => (
+                  <div key={it._id} className="rounded-md border border-black/10 dark:border-white/10 p-3 flex items-center gap-3">
+                    <div className="relative w-16 h-12 bg-black/5 dark:bg-white/10 overflow-hidden rounded">
+                      {it.images?.[0] || it.imageUrl ? (
+                        <Image src={(it.images?.[0] || it.imageUrl)!} alt={it.title} fill className="object-cover" sizes="64px" />
+                      ) : null}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium truncate" title={it.title}>{it.title}</div>
+                      <div className="text-xs text-muted mt-0.5">{formatPKR(it.price)} · <span className={it.inStock ? "text-emerald-600" : "text-rose-600"}>{it.inStock ? "In stock" : "Out of stock"}</span>{it.onSale ? " · SALE" : ""}</div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button onClick={() => editItem(it)} className="btn-primary text-xs">Edit</button>
+                      <button onClick={() => remove(it._id)} className="btn-outline text-xs">Del</button>
+                    </div>
+                  </div>
+                ))}
+                {!sorted.length ? (
+                  <div className="rounded-md border border-black/10 dark:border-white/10 p-6 text-center text-muted">No products match your search.</div>
+                ) : null}
+              </div>
+
+              {/* Desktop table view */}
+              <div className="hidden md:block overflow-auto border border-black/10 dark:border-white/10 rounded-md">
+                <table className="min-w-full text-sm">
+                  <thead className="bg-black/5 dark:bg-white/5 text-muted">
+                    <tr>
+                      <th className="text-left font-medium px-3 py-2">Item</th>
+                      <th className="text-left font-medium px-3 py-2">Price</th>
+                      <th className="text-left font-medium px-3 py-2">Stock</th>
+                      <th className="text-left font-medium px-3 py-2">Images</th>
+                      <th className="text-right font-medium px-3 py-2">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {sorted.map((it) => (
+                      <tr key={it._id} className="border-t border-black/10 dark:border-white/10">
+                        <td className="px-3 py-2">
+                          <div className="flex items-center gap-3">
+                            <div className="relative w-12 h-9 bg-black/5 dark:bg-white/10 overflow-hidden rounded">
+                              {it.images?.[0] || it.imageUrl ? (
+                                <Image src={(it.images?.[0] || it.imageUrl)!} alt={it.title} fill className="object-cover" sizes="48px" />
+                              ) : null}
+                            </div>
+                            <div className="font-medium truncate max-w-[280px]" title={it.title}>{it.title}</div>
+                          </div>
+                        </td>
+                        <td className="px-3 py-2">{formatPKR(it.price)}</td>
+                        <td className="px-3 py-2">
+                          <span className={`text-xs ${it.inStock ? "text-emerald-600" : "text-rose-600"}`}>{it.inStock ? "In stock" : "Out of stock"}</span>
+                          {it.onSale ? <span className="ml-2 rounded bg-yellow-200/60 px-1.5 py-0.5 text-[10px] text-yellow-800">SALE</span> : null}
+                        </td>
+                        <td className="px-3 py-2 text-muted">{it.images?.length || 0}</td>
+                        <td className="px-3 py-2 text-right">
+                          <button onClick={() => editItem(it)} className="btn-primary text-xs">Edit</button>
+                          <button onClick={() => remove(it._id)} className="btn-outline text-xs ml-2">Delete</button>
+                        </td>
+                      </tr>
+                    ))}
+                    {!sorted.length ? (
+                      <tr>
+                        <td colSpan={5} className="px-3 py-10 text-center text-muted">No products match your search.</td>
+                      </tr>
+                    ) : null}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          ) : (
+            <section className="max-w-6xl mx-auto grid gap-5 md:grid-cols-2 items-start">
+              {/* Hero 1 settings */}
+              <div className="rounded-xl border border-black/10 dark:border-white/10 p-5 bg-white/5 dark:bg-white/5 shadow-sm space-y-3">
+                <div className="text-sm font-medium">Homepage hero</div>
+                <label className="block text-xs text-muted">Headline</label>
+                <input value={settings?.heroHeadline || ""} onChange={(e) => setSettings((prev) => ({ ...(prev || {}), heroHeadline: e.target.value }))} placeholder="Elegant gemstones, modern designs" className="w-full rounded-md border px-3 py-2" />
+                <div className="text-xs text-muted">Shown at the top of the homepage.</div>
+              </div>
+              <div className="rounded-xl border border-black/10 dark:border-white/10 p-5 bg-white/5 dark:bg-white/5 shadow-sm">
+                <div className="text-sm font-medium mb-2">Hero image</div>
+                <div className="relative rounded-lg overflow-hidden border border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/10 aspect-[16/9]">
+                  {settings?.heroImageUrl ? (
+                    <Image src={polishImageUrl(settings.heroImageUrl, ["c_fill", "g_auto", "w_760", "h_428"]) } alt="Hero" fill className="object-cover" sizes="(max-width: 768px) 100vw, 380px" />
+                  ) : (
+                    <div className="absolute inset-0 flex items-center justify-center text-sm text-muted">No image</div>
+                  )}
+                </div>
+                <input type="file" accept="image/*" onChange={async (e) => {
+                  const f = e.target.files?.[0];
+                  if (!f) return;
+                  try {
+                    const { url, publicId } = await uploadMediaFile(f);
+                    if (url) {
+                      setSettings((prev) => ({ ...(prev || {}), heroImageUrl: url, heroImagePublicId: publicId }));
+                      await fetch("/api/settings", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...(settings || {}), heroImageUrl: url, heroImagePublicId: publicId }) });
+                    }
+                  } catch (err) {
+                    console.error("Hero upload failed", err);
+                    alert("Hero image upload failed");
+                  }
+                }} className="mt-3 text-sm" />
+              </div>
+
+              {/* Hero 2 settings */}
+              <div className="rounded-xl border border-black/10 dark:border-white/10 p-5 bg-white/5 dark:bg-white/5 shadow-sm space-y-3">
+                <div className="text-sm font-medium">Second hero</div>
+                <label className="block text-xs text-muted">Headline</label>
+                <input value={settings?.hero2Headline || ""} onChange={(e) => setSettings((prev) => ({ ...(prev || {}), hero2Headline: e.target.value }))} placeholder="Discover rare stones" className="w-full rounded-md border px-3 py-2" />
+                <label className="block text-xs text-muted mt-3">Tagline</label>
+                <input value={settings?.hero2Tagline || ""} onChange={(e) => setSettings((prev) => ({ ...(prev || {}), hero2Tagline: e.target.value }))} placeholder="Curated selections, new each week" className="w-full rounded-md border px-3 py-2" />
+                <div className="text-xs text-muted">Shown below the featured products section.</div>
+              </div>
+              <div className="rounded-xl border border-black/10 dark:border-white/10 p-5 bg-white/5 dark:bg-white/5 shadow-sm">
+                <div className="text-sm font-medium mb-2">Second hero image</div>
+                <div className="relative rounded-lg overflow-hidden border border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/10 aspect-[16/9]">
+                  {settings?.hero2ImageUrl ? (
+                    <Image src={polishImageUrl(settings.hero2ImageUrl, ["c_fill", "g_auto", "w_760", "h_428"]) } alt="Second Hero" fill className="object-cover" sizes="(max-width: 768px) 100vw, 380px" />
+                  ) : (
+                    <div className="absolute inset-0 flex items-center justify-center text-sm text-muted">No image</div>
+                  )}
+                </div>
+                <input type="file" accept="image/*" onChange={async (e) => {
+                  const f = e.target.files?.[0];
+                  if (!f) return;
+                  try {
+                    const { url, publicId } = await uploadMediaFile(f);
+                    if (url) {
+                      setSettings((prev) => ({ ...(prev || {}), hero2ImageUrl: url, hero2ImagePublicId: publicId }));
+                      await fetch("/api/settings", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...(settings || {}), hero2ImageUrl: url, hero2ImagePublicId: publicId }) });
+                    }
+                  } catch (err) {
+                    console.error("Second hero upload failed", err);
+                    alert("Second hero image upload failed");
+                  }
+                }} className="mt-3 text-sm" />
+              </div>
+            </section>
+          )}
+        </div>
+
+        {/* Centered Modal for product create/edit */}
+  <div className={`fixed inset-0 z-50 ${showModal ? "" : "pointer-events-none"}`} aria-hidden={!showModal}>
+          {/* backdrop */}
+          <div className={`absolute inset-0 bg-black/40 transition-opacity ${showModal ? "opacity-100" : "opacity-0"}`} onClick={() => { setShowModal(false); resetForm(); }} />
+          <div className={`absolute left-1/2 top-1/2 w-[92vw] max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-md border border-black/10 dark:border-white/10 bg-background shadow-xl transition-transform ${showModal ? "scale-100 opacity-100" : "scale-95 opacity-0"}`}>
+            <div className="h-12 flex items-center justify-between px-4 border-b border-black/10 dark:border-white/10">
+              <div className="font-medium">{editingId ? "Edit product" : "New product"}</div>
+              <button className="btn-outline" onClick={() => { setShowModal(false); resetForm(); }}>Close</button>
+            </div>
+            <div className="p-4 max-h-[70vh] overflow-y-auto">
+              <form onSubmit={onSubmit} className="grid gap-3">
+              <label className="text-xs text-muted">Title</label>
+              <input required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Natural Ruby Necklace" className="rounded-md border px-3 py-2" />
+
+              <label className="text-xs text-muted">Description</label>
+              <textarea value={form.description || ""} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Add product details, materials, dimensions..." className="min-h-28 rounded-md border px-3 py-2" />
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs text-muted">Price (PKR)</label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    placeholder="0"
+                    value={priceInput}
+                    onChange={(e) => {
+                      const onlyDigits = e.target.value.replace(/[^0-9]/g, "");
+                      setPriceInput(onlyDigits);
+                    }}
+                    className="w-full rounded-md border px-3 py-2"
+                    aria-label="Price in PKR"
+                  />
+                </div>
+                <div className="flex items-end gap-3">
+                  <label className="inline-flex items-center gap-2 text-xs"><input type="checkbox" checked={!!form.inStock} onChange={(e) => setForm({ ...form, inStock: e.target.checked })} /> In stock</label>
+                  <label className="inline-flex items-center gap-2 text-xs"><input type="checkbox" checked={!!form.onSale} onChange={(e) => setForm({ ...form, onSale: e.target.checked })} /> On sale</label>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-xs text-muted">
+                  <span>Images ({(form.images?.length || 0)}/7)</span>
+                  <span>First image is the cover</span>
+                </div>
+                <input type="file" accept="image/*" multiple onChange={async (e) => {
+                  const files = Array.from(e.target.files || []);
+                  if (!files.length) return;
+                  const current = form.images || [];
+                  const slots = Math.max(0, 7 - current.length);
+                  const toUpload = files.slice(0, slots);
+                  if (!toUpload.length) {
+                    alert("You already have 7 images. Remove some to add more.");
+                    return;
+                  }
+                  try {
+                    setIsUploading(true);
+                    setUploadingTotal(toUpload.length);
+                    setUploadingDone(0);
+                    const urls: string[] = [];
+                    // sequential uploads to avoid rate spikes
+                    for (const f of toUpload) {
+                      const { url } = await uploadMediaFile(f);
+                      if (url) urls.push(url);
+                      setUploadingDone((d) => d + 1);
+                    }
+                    if (urls.length) {
+                      const next = Array.from(new Set([...(current || []), ...urls])).slice(0, 7);
+                      setForm((prev) => ({ ...prev, images: next, imageUrl: prev.imageUrl || next[0] }));
+                    }
+                  } catch (err) {
+                    console.error("Upload failed:", err);
+                    alert(`Image upload failed: ${String(err)}`);
+                  } finally {
+                    setIsUploading(false);
+                    setUploadingTotal(0);
+                    setUploadingDone(0);
+                    e.currentTarget.value = "";
+                  }
+                }} className="text-sm" />
+
+                {isUploading && (
+                  <div className="mt-2">
+                    <div className="flex items-center justify-between text-xs mb-1">
+                      <span>Uploading images…</span>
+                      <span>{uploadingDone}/{uploadingTotal}</span>
+                    </div>
+                    <div className="w-full h-2 rounded bg-black/10 dark:bg-white/10 overflow-hidden" aria-label="Upload progress" role="progressbar" aria-valuemin={0} aria-valuemax={uploadingTotal} aria-valuenow={uploadingDone}>
+                      <div className="h-full bg-accent transition-[width]" style={{ width: `${uploadingTotal ? Math.round((uploadingDone / uploadingTotal) * 100) : 0}%` }} />
+                    </div>
+                  </div>
+                )}
+
+                {form.images && form.images.length ? (
+                  <div className="mt-2 grid grid-cols-3 sm:grid-cols-4 gap-2">
+                    {form.images.filter(Boolean).map((url, idx) => (
+                      <div key={url} className="rounded overflow-hidden border border-black/10 dark:border-white/10 relative">
+                        <div className="relative w-full h-24">
+                          <Image src={url} alt={`img-${idx}`} fill className="object-cover" sizes="100px" />
+                        </div>
+                        <button type="button" onClick={() => setForm((prev) => ({ ...prev, images: (prev.images || []).filter((u) => u !== url) }))} className="absolute top-1 right-1 bg-white/80 rounded px-1 text-xs">×</button>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+
+              <div className="flex items-center gap-2 pt-2">
+                <button disabled={loading || isUploading} className="btn-primary">{loading ? "Saving..." : isUploading ? "Uploading images..." : editingId ? "Save product" : "Create product"}</button>
+                <button type="button" className="btn-outline" onClick={() => { setShowModal(false); resetForm(); }}>Cancel</button>
+              </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </main>
+      </div>
+    </div>
+  );
+}
+
+

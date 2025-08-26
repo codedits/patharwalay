@@ -1,36 +1,68 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+Pathar Walay — a classical, elegant and modern gemstone storefront built with Next.js and Tailwind CSS.
 
 ## Getting Started
 
-First, run the development server:
+1. Install dependencies:
+
+```bash
+npm install
+```
+
+2. Run the development server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open `http://localhost:3000` to view the site. The app router is used under `app/`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Project Structure
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- `app/layout.tsx`: Global shell with Navbar and Footer
+- `app/page.tsx`: Home page with hero and featured products
+- `app/products/page.tsx`: Products listing with client-side search
+- `app/products/[slug]/page.tsx`: Product detail placeholder route
+- `app/globals.css`: Tailwind and theme tokens
+- `next.config.ts`: Remote image domains (Unsplash, Cloudinary)
 
-## Learn More
+## Styling & Theme
 
-To learn more about Next.js, take a look at the following resources:
+Tailwind CSS v4 is configured. Theme tokens for foreground/background, muted, and accent colors provide a classic luxury feel (warm gold, deep teal). You can tweak them in `app/globals.css`.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Data & Media (Planned)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- MongoDB: Replace in-memory arrays with server actions or route handlers that read from MongoDB.
+- Cloudinary: Replace Unsplash URLs with Cloudinary assets. Add your `res.cloudinary.com/<cloud_name>` domain to `next.config.ts` if different.
 
-## Deploy on Vercel
+## Admin Dashboard
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- Visit `/admin` to create and manage products.
+- API routes: `POST /api/products`, `GET /api/products`, `GET/PUT/DELETE /api/products/[id]`.
+- Configure environment:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+MONGODB_URI="your-mongodb-connection-string"
+MONGODB_DB=patharwalay
+```
+
+Notes:
+- The project already contains a small MongoDB helper in `lib/db.ts` and a `Product` Mongoose model in `models/Product.ts`.
+- The admin UI at `/admin` POSTs to `/api/products` which will persist documents to MongoDB when `MONGODB_URI` is set.
+
+Troubleshooting:
+- If you see connection errors, confirm `MONGODB_URI` is correct and your IP or network is allowed by the Atlas cluster.
+- Check the server logs in the terminal where `npm run dev` is running for Mongoose errors.
+
+## Next Steps
+
+- Hook up real product data (MongoDB models, server actions)
+- Add cart and checkout flow
+- Add categories/filters and pagination
+- Add authentication for admin and customer areas
+
+## Scripts
+
+- `npm run dev` — start dev server
+- `npm run build` — production build
+- `npm run start` — start production server
+- `npm run lint` — run ESLint

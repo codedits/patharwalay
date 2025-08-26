@@ -1,26 +1,373 @@
 @import "tailwindcss";
 
 :root {
+  /* Light theme defaults */
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #0b0b0b;
+  --muted: #6b7280;
+  --accent: #92400e; /* rich amber */
+  --accent-2: #0f766e; /* deep teal */
+  --glow: 0 0 0 0 rgba(251,191,36,0), 0 0 20px 2px rgba(251,191,36,0.25), 0 0 40px 6px rgba(37,99,235,0.15);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* Dark theme overrides when .dark is present on html */
+.dark {
+  --background: #0a0a0a;
+  --foreground: #e5e7eb;
+  --muted: #9ca3af;
+  --accent: #fbbf24; /* warm gold */
+  --accent-2: #2dd4bf; /* aqua */
 }
 
+/* Explicit light preference class */
+.light {
+  color-scheme: light;
+}
+.dark {
+  color-scheme: dark;
+}
+
+/* Utility classes mapped to CSS variables so we don't rely on @theme */
+.bg-background { background-color: var(--background); }
+.text-foreground { color: var(--foreground); }
+.text-muted { color: var(--muted); }
+.bg-accent { background-color: var(--accent); }
+.text-accent { color: var(--accent); }
+.text-accent-2 { color: var(--accent-2); }
+
+/* Keep system preference as a fallback when user hasn't picked */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not(.dark):not(.light) {
     --background: #0a0a0a;
-    --foreground: #ededed;
+    --foreground: #e5e7eb;
+    --muted: #9ca3af;
+    --accent: #fbbf24;
+    --accent-2: #2dd4bf;
   }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-poppins), var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system,
+    Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica Neue, Arial,
+    "Apple Color Emoji", "Segoe UI Emoji";
+}
+
+/* Safety net: avoid horizontal scrolling from full-bleed sections on Windows */
+html, body { overflow-x: hidden; }
+
+.container-page {
+  width: 100%;
+  max-width: 80rem; /* ~7xl */
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+@media (min-width: 640px) { /* sm */
+  .container-page { padding-left: 1.5rem; padding-right: 1.5rem; }
+}
+@media (min-width: 1024px) { /* lg */
+  .container-page { padding-left: 2rem; padding-right: 2rem; }
+}
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.375rem; /* rounded-md */
+  background-color: var(--accent);
+  color: #ffffff;
+  padding: 0.625rem 1.25rem; /* py-2.5 px-5 */
+  font-size: 0.875rem; /* text-sm */
+  font-weight: 500; /* font-medium */
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  transition: opacity 150ms ease, background-color 150ms ease, color 150ms ease;
+}
+.btn-primary:hover { opacity: 0.9; }
+
+/* Red CTA variant */
+.btn-red {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.375rem; /* rounded-md */
+  background-color: #dc2626; /* red-600 */
+  color: #ffffff;
+  padding: 0.625rem 1.25rem; /* py-2.5 px-5 */
+  font-size: 0.875rem; /* text-sm */
+  font-weight: 600; /* a bit stronger for CTA */
+  box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+  transition: transform 150ms ease, opacity 150ms ease, background-color 150ms ease;
+}
+.btn-red:hover { opacity: 0.95; background-color: #b91c1c; /* red-700 */ }
+.btn-red:active { transform: translateY(1px); }
+.btn-red:focus-visible { outline: 2px solid rgba(220,38,38,0.6); outline-offset: 2px; }
+
+.btn-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.375rem;
+  border: 1px solid rgba(0,0,0,0.1);
+  padding: 0.625rem 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  background-color: transparent;
+  transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease;
+}
+html.dark .btn-outline { border-color: rgba(255,255,255,0.1); }
+.btn-outline:hover { background-color: rgba(0,0,0,0.05); }
+html.dark .btn-outline:hover { background-color: rgba(255,255,255,0.05); }
+
+.lux-heading {
+  font-family: var(--font-cormorant), ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  letter-spacing: 0.01em;
+}
+
+/* Apply Cormorant Garamond to main headings by default */
+h1, h2, h3 {
+  font-family: var(--font-cormorant), ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  /* subtle white glow in light mode */
+  text-shadow: 0 0 4px rgba(255, 255, 255, 0.35);
+}
+
+/* strengthen the white glow in dark mode */
+html.dark h1, html.dark h2, html.dark h3 {
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.6);
+}
+
+.gold-glow {
+  box-shadow: var(--glow);
+}
+
+/* Red glow utility for prominent CTAs */
+.red-glow {
+  box-shadow:
+    0 0 0 0 rgba(220,38,38,0),
+    0 0 20px 3px rgba(220,38,38,0.30),
+    0 0 44px 10px rgba(220,38,38,0.18);
+}
+
+.nav-link {
+  font-size: 0.875rem; /* text-sm */
+  letter-spacing: 0.08em; /* gentler tracking */
+  text-transform: none; /* classical casing */
+  transition: opacity 150ms ease;
+}
+.nav-link:hover { opacity: 0.8; }
+
+.underline-cta {
+  position: relative;
+}
+.underline-cta::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -2px;
+  width: 100%;
+  height: 1px;
+  background: currentColor;
+}
+
+/* Make a child span the full viewport width inside a centered container */
+.full-bleed {
+  width: 100vw; /* fallback for older browsers */
+  position: relative;
+  left: 50%;
+  right: 50%;
+  margin-left: -50vw;
+  margin-right: -50vw;
+}
+
+/* Prefer dynamic viewport width to exclude scrollbar when supported */
+@supports (width: 100dvw) {
+  .full-bleed {
+    width: 100dvw;
+    margin-left: -50dvw;
+    margin-right: -50dvw;
+  }
+}
+
+/* Subtle underline for section/page headings (exclude hero) */
+.heading-underline {
+  position: relative;
+  padding-bottom: 0.25rem; /* pb-1 */
+}
+.heading-underline::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -2px;
+  height: 2px;
+  width: 3.5rem; /* ~56px */
+  background: rgba(0, 0, 0, 0.6); /* subtle black in light mode */
+  border-radius: 1px;
+}
+html.dark .heading-underline::after {
+  background: rgba(255, 255, 255, 0.5); /* soften in dark mode */
+}
+
+/* Thin light-mode outlines for objects (use class "outline-light") */
+.outline-light {
+  border-radius: 0.375rem; /* subtle, classical rounding */
+  border: 1px solid rgba(0,0,0,0.2); /* darker separation in light mode */
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06); /* slightly elevated */
+}
+/* Hide/soften the outline in dark mode */
+html.dark .outline-light {
+  border-color: transparent;
+  box-shadow: none;
+}
+
+/* Social media card (scoped styles) */
+.uiverse-card {
+  position: relative;
+  width: 19em;
+  height: 25em;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: #171717;
+  color: white;
+  font-weight: 600;
+  padding: 1em 2em 1em 1em;
+  border-radius: 20px;
+  overflow: hidden;
+  z-index: 1;
+  row-gap: 1em;
+}
+.uiverse-card .uiverse-image {
+  width: 12em;
+  margin-right: 1em;
+  animation: move 10s ease-in-out infinite;
+  z-index: 5;
+}
+.uiverse-card .uiverse-image:hover { cursor: grab; }
+.uiverse-card .uiverse-icons svg { width: 20px; height: 20px; }
+.uiverse-card::before {
+  content: "";
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  inset: -3px;
+  border-radius: 10px;
+  background: radial-gradient(#858585, transparent, transparent);
+  transform: translate(-5px, 250px);
+  transition: 0.4s ease-in-out;
+  z-index: -1;
+}
+.uiverse-card:hover::before { width: 150%; height: 100%; margin-left: -4.25em; }
+.uiverse-card::after {
+  content: "";
+  position: absolute;
+  inset: 2px;
+  border-radius: 20px;
+  background: rgba(23, 23, 23, 0.7);
+  transition: all 0.4s ease-in-out;
+  z-index: -1;
+}
+.uiverse-card .uiverse-heading { z-index: 2; transition: 0.4s ease-in-out; position: relative; }
+.uiverse-card:hover .uiverse-heading { letter-spacing: 0.025em; }
+.uiverse-card .uiverse-heading::before,
+.uiverse-card .uiverse-icons::before,
+.uiverse-card .uiverse-icons::after { content: ""; position: absolute; top: 0; left: 0; width: 2px; height: 2px; border-radius: 50%; opacity: 1; z-index: -1; transition: 1s ease; animation: 1s glowing-stars linear alternate infinite; }
+.uiverse-card .uiverse-heading::before { box-shadow: 220px 118px #fff, 280px 176px #fff, 40px 50px #fff, 60px 180px #fff, 120px 130px #fff, 180px 176px #fff, 220px 290px #fff, 520px 250px #fff, 400px 220px #fff, 50px 350px #fff, 10px 230px #fff; }
+.uiverse-card .uiverse-icons::before { box-shadow: 140px 20px #fff, 425px 20px #fff, 70px 120px #fff, 20px 130px #fff, 110px 80px #fff, 280px 80px #fff, 250px 350px #fff, 280px 230px #fff, 220px 190px #fff, 450px 100px #fff, 380px 80px #fff, 520px 50px #fff; animation-delay: 0.4s; }
+.uiverse-card .uiverse-icons::after { box-shadow: 490px 330px #fff, 420px 300px #fff, 320px 280px #fff, 380px 350px #fff, 546px 170px #fff, 420px 180px #fff, 370px 150px #fff, 200px 250px #fff, 80px 20px #fff, 190px 50px #fff, 270px 20px #fff, 120px 230px #fff, 350px -1px #fff, 150px 369px #fff; animation-delay: 0.8s; }
+.uiverse-card:hover .uiverse-heading::before,
+.uiverse-card:hover .uiverse-icons::before,
+.uiverse-card:hover .uiverse-icons::after { filter: blur(3px); }
+.uiverse-card .uiverse-icons { display: flex; align-items: center; justify-content: center; flex-direction: row; column-gap: 1em; z-index: 1; position: relative; }
+.uiverse-card .instagram,
+.uiverse-card .x,
+.uiverse-card .discord { position: relative; transition: 0.4s ease-in-out; }
+.uiverse-card .instagram::after,
+.uiverse-card .x::after,
+.uiverse-card .discord::after { content: ""; position: absolute; width: 0.5em; height: 0.5em; left: 0; background-color: white; box-shadow: 0 0 10px rgba(233,233,233,0.5), 0 0 10px rgba(192,192,192,0.5); border-radius: 50%; z-index: -1; transition: 0.3s ease-in-out; }
+.uiverse-card .instagram svg path,
+.uiverse-card .x svg path,
+.uiverse-card .discord svg path { stroke: #808080; transition: 0.4s ease-in-out; }
+.uiverse-card .instagram:hover svg path { stroke: #cc39a4; }
+.uiverse-card .x:hover svg path { stroke: black; }
+.uiverse-card .discord:hover svg path { stroke: #8c9eff; }
+.uiverse-card .instagram svg,
+.uiverse-card .x svg,
+.uiverse-card .discord svg { transition: 0.3s ease-in-out; }
+.uiverse-card .instagram:hover svg { transform: scale(1.4); }
+.uiverse-card .x:hover svg,
+.uiverse-card .discord:hover svg { transform: scale(1.25); }
+.uiverse-card .instagram::before,
+.uiverse-card .x::before,
+.uiverse-card .discord::before { content: ""; position: absolute; rotate: -45deg; width: 5em; height: 1px; background: linear-gradient(90deg, #ffffff, transparent); animation: 4s shootingStar ease-in-out infinite; }
+.uiverse-card .instagram::before { top: -700%; left: 1050%; animation-delay: 1s; }
+.uiverse-card .x::before { top: -1300%; left: 850%; animation-delay: 3s; }
+.uiverse-card .discord::before { top: -2100%; left: 850%; animation-delay: 5s; }
+.uiverse-card:hover .instagram::before,
+.uiverse-card:hover .x::before,
+.uiverse-card:hover .discord::before { filter: blur(3px); }
+
+/* Keyframes from snippet */
+@keyframes shootingStar { 0% { transform: translateX(0) translateY(0); opacity: 1; } 50% { transform: translateX(-55em) translateY(0); opacity: 1; } 70% { transform: translateX(-70em) translateY(0); opacity: 0; } 100% { transform: translateX(0) translateY(0); opacity: 0; } }
+
+/* Elevated card surface to avoid blending with background */
+.surface-card {
+  border-radius: 0.75rem; /* rounded-xl */
+  background: #ffffff;
+  border: 1px solid rgba(0,0,0,0.12);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.06);
+  transition: box-shadow 200ms ease, transform 200ms ease, background-color 200ms ease, border-color 200ms ease;
+}
+.surface-card:hover { box-shadow: 0 12px 34px rgba(0,0,0,0.10); }
+html.dark .surface-card {
+  background: rgba(255,255,255,0.03);
+  border-color: rgba(255,255,255,0.08);
+  box-shadow: 0 10px 40px rgba(0,0,0,0.55);
+}
+html.dark .surface-card:hover { box-shadow: 0 16px 56px rgba(0,0,0,0.65); }
+
+/* Media vignette overlay for cards */
+.card-media {
+  position: relative;
+  overflow: hidden;
+  border-radius: 0.75rem; /* rounded-xl */
+}
+.card-media::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(120% 70% at 50% 100%, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0) 55%);
+  opacity: 0.15;
+  transition: opacity 200ms ease;
+}
+html.dark .card-media::after {
+  background: radial-gradient(120% 70% at 50% 100%, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0) 55%);
+  opacity: 0.25;
+}
+.group:hover .card-media::after { opacity: 0.35; }
+
+/* Small status badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.125rem 0.5rem; /* py-0.5 px-2 */
+  border-radius: 9999px;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.02em;
+}
+.badge-sale {
+  color: #854d0e;
+  background: rgba(234,179,8,0.18); /* amber-400 */
+  border: 1px solid rgba(234,179,8,0.45);
+}
+.badge-out {
+  color: #7f1d1d;
+  background: rgba(239,68,68,0.18); /* red-500 */
+  border: 1px solid rgba(239,68,68,0.45);
 }
