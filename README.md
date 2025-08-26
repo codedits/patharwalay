@@ -1,4 +1,4 @@
-Pathar Walay — a classical, elegant and modern gemstone storefront built with Next.js and Tailwind CSS.
+Patthar Walay — a classical, elegant and modern gemstone storefront built with Next.js and Tailwind CSS.
 
 ## Getting Started
 

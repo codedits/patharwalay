@@ -75,9 +75,9 @@ export default function ProductDetailClient({ product }: { product?: IProduct | 
           ) : null}
         </div>
         <motion.div className="space-y-4" variants={{ hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0, transition: { duration: 0.45, ease: "easeOut" } } }}>
-          <h1 className="lux-heading text-3xl font-semibold tracking-tight capitalize">{title}</h1>
-          <p className="text-muted">A stunning handcrafted piece featuring ethically sourced gemstones.</p>
-          <div className="text-xl font-semibold">{formatPKR(price)}</div>
+                <h1 className="lux-heading text-3xl font-semibold tracking-tight capitalize">{title}</h1>
+                {/* Description will be shown in the details block below */}
+                <div className="text-xl font-semibold">{formatPKR(price)}</div>
           <div className="flex items-center gap-1 text-accent" aria-label="Rating 4.8 out of 5">
             <span>★</span><span>★</span><span>★</span><span>★</span><span className="opacity-50">★</span>
             <span className="ml-2 text-xs text-muted">4.8 (128)</span>
@@ -86,10 +86,14 @@ export default function ProductDetailClient({ product }: { product?: IProduct | 
             <motion.button className="btn-red red-glow" whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>Buy now</motion.button>
           </div>
           <div className="pt-6 text-sm leading-6">
-            <p>
-              Placeholder details. You can later fetch product info from MongoDB and images
-              from Cloudinary. This route is ready for dynamic data.
-            </p>
+            {product?.description ? (
+              <p>{product.description}</p>
+            ) : (
+              <p>
+                Placeholder details. You can later fetch product info from MongoDB and images
+                from Cloudinary. This route is ready for dynamic data.
+              </p>
+            )}
           </div>
         </motion.div>
       </motion.div>

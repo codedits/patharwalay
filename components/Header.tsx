@@ -24,7 +24,7 @@ export default function Header() {
         {/* Desktop */}
         <div className="hidden md:flex items-center justify-between w-full gap-6">
           <div className="flex items-center gap-3">
-            <Link href="/" className="text-xl font-semibold tracking-wide">PATHAR WALAY</Link>
+            <Link href="/" className="text-xl font-semibold tracking-wide">Patthar Walay</Link>
             <form action="/products" method="get" className="hidden lg:block">
               <div className="relative">
                 <input type="search" name="q" placeholder="Search" className="w-64 rounded-md border border-black/10 dark:border-white/15 bg-background px-9 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-accent/40" />
@@ -48,7 +48,7 @@ export default function Header() {
           <button aria-label="Menu" onClick={() => setOpen((v) => !v)} className="inline-flex items-center justify-center h-9 w-9 rounded-md border border-black/10 dark:border-white/15 hover:bg-black/5 dark:hover:bg-white/5 transition">
             <svg aria-hidden viewBox="0 0 24 24" className="h-5 w-5 text-foreground"><path fill="currentColor" d="M4 7h16v2H4zm0 6h16v2H4z"/></svg>
           </button>
-          <Link href="/" className="text-lg font-semibold tracking-wide">PATHAR WALAY</Link>
+          <Link href="/" className="text-lg font-semibold tracking-wide">Patthar Walay</Link>
           <div className="flex items-center gap-2">
             <ThemeToggle />
           </div>

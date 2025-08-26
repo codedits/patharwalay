@@ -6,10 +6,6 @@ import cloudinaryImport from "cloudinary";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-type CloudinaryV2 = typeof cloudinaryImport.v2;
-const cloudinary: CloudinaryV2 = (cloudinaryImport as unknown as { v2: CloudinaryV2 }).v2;
-cloudinary.config({ secure: true });
-
 export async function GET() {
   await connectToDatabase();
   const doc = await SiteSettings.findOne().lean();
@@ -22,10 +18,16 @@ export async function GET() {
       delete anyDoc.heroHeadLine;
     }
   // ensure hero2 fields exist (fallbacks not required, just pass through)
-    return anyDoc;
+  // Never expose admin_pass in the public settings response
+  if (anyDoc.admin_pass) delete anyDoc.admin_pass;
+  return anyDoc;
   })();
   return NextResponse.json(normalized);
 }
+
+type CloudinaryV2 = typeof cloudinaryImport.v2;
+const cloudinary: CloudinaryV2 = (cloudinaryImport as unknown as { v2: CloudinaryV2 }).v2;
+cloudinary.config({ secure: true });
 
 export async function PUT(req: Request) {
   await connectToDatabase();
@@ -50,7 +52,7 @@ export async function PUT(req: Request) {
     const newHero1 = (body as { heroImagePublicId?: string }).heroImagePublicId;
     if (newHero1 && prevHero1 && newHero1 !== prevHero1) {
       // ignore errors; just log
-  await cloudinary.uploader.destroy(prevHero1).catch((e: unknown) => console.warn("Failed to delete old hero image:", e));
+        await cloudinary.uploader.destroy(prevHero1).catch((e: unknown) => console.warn("Failed to delete old hero image:", e));
     } else if ((body as { heroImageUrl?: unknown }).heroImageUrl == null || (body as { heroImageUrl?: unknown }).heroImageUrl === "") {
       if (prevHero1) {
         await cloudinary.uploader.destroy(prevHero1).catch((e: unknown) => console.warn("Failed to delete cleared hero image:", e));
@@ -62,7 +64,7 @@ export async function PUT(req: Request) {
   try {
     const newHero2 = (body as { hero2ImagePublicId?: string }).hero2ImagePublicId;
     if (newHero2 && prevHero2 && newHero2 !== prevHero2) {
-  await cloudinary.uploader.destroy(prevHero2).catch((e: unknown) => console.warn("Failed to delete old hero2 image:", e));
+        await cloudinary.uploader.destroy(prevHero2).catch((e: unknown) => console.warn("Failed to delete old hero2 image:", e));
     } else if ((body as { hero2ImageUrl?: unknown }).hero2ImageUrl == null || (body as { hero2ImageUrl?: unknown }).hero2ImageUrl === "") {
       if (prevHero2) {
         await cloudinary.uploader.destroy(prevHero2).catch((e: unknown) => console.warn("Failed to delete cleared hero2 image:", e));
@@ -74,7 +76,7 @@ export async function PUT(req: Request) {
   try {
     const newPH = (body as { productsHeroImagePublicId?: string }).productsHeroImagePublicId;
     if (newPH && prevProductsHero && newPH !== prevProductsHero) {
-      await cloudinary.uploader.destroy(prevProductsHero).catch((e: unknown) => console.warn("Failed to delete old products hero image:", e));
+        await cloudinary.uploader.destroy(prevProductsHero).catch((e: unknown) => console.warn("Failed to delete old products hero image:", e));
     } else if ((body as { productsHeroImageUrl?: unknown }).productsHeroImageUrl == null || (body as { productsHeroImageUrl?: unknown }).productsHeroImageUrl === "") {
       if (prevProductsHero) {
         await cloudinary.uploader.destroy(prevProductsHero).catch((e: unknown) => console.warn("Failed to delete cleared products hero image:", e));

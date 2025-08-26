@@ -5,14 +5,14 @@ export default function Footer() {
   <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 sm:py-10 outline-light">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
           <div className="space-y-3 max-w-md">
-            <div className="lux-heading text-2xl font-semibold tracking-wide">PATHAR WALAY</div>
+            <div className="lux-heading text-2xl font-semibold tracking-wide">Patthar Walay</div>
             <p className="text-sm text-muted">
               Ethically sourced gemstones and handcrafted jewelry. Discover timeless pieces with modern elegance.
             </p>
           </div>
 
           <div className="flex items-center gap-3">
-            <a aria-label="Instagram" href="#" className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-black/10 dark:border-white/10 hover:bg-white/5 transition">
+            <a aria-label="Instagram" href="https://www.instagram.com/pattharwalay" className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-black/10 dark:border-white/10 hover:bg-white/5 transition">
               <svg aria-hidden viewBox="0 0 24 24" className="h-4 w-4"><path fill="currentColor" d="M7 2h10a5 5 0 0 1 5 5v10a5 5 0 0 1-5 5H7a5 5 0 0 1-5-5V7a5 5 0 0 1 5-5m5 5a5 5 0 1 0 0 10a5 5 0 0 0 0-10m6.5-.75a1.25 1.25 0 1 0 0 2.5a1.25 1.25 0 0 0 0-2.5M12 9a3 3 0 1 1 0 6a3 3 0 0 1 0-6"/></svg>
             </a>
             <a aria-label="Facebook" href="#" className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-black/10 dark:border-white/10 hover:bg-white/5 transition">
@@ -27,7 +27,7 @@ export default function Footer() {
 
       <div className="border-t border-black/10 dark:border-white/10">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-4 text-xs text-center">
-          <p>© {year} Pathar Walay. All rights reserved.</p>
+          <p>© {year} Patthar Walay. All rights reserved.</p>
         </div>
       </div>
     </footer>

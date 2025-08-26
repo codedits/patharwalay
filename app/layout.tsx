@@ -27,8 +27,8 @@ const poppins = Poppins({
 });
 export const metadata: Metadata = {
   title: {
-    default: "Pathar Walay | Timeless Gems & Fine Jewelry",
-    template: "%s | Pathar Walay",
+  default: "Patthar Walay | Timeless Gems & Fine Jewelry",
+  template: "%s | Patthar Walay",
   },
   description:
     "Discover ethically sourced gemstones and handcrafted jewelry. Shop rings, pendants, and more.",

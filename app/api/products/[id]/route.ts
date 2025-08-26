@@ -57,11 +57,11 @@ export async function PUT(req: Request, { params }: Params) {
   if (!body.slug && body.title) {
     body.slug = String(body.title).trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
   }
-  // avoid slug collisions: append short suffix if slug already exists
+  // avoid slug collisions: append short suffix if slug would collide (excluding current doc)
   if (body.slug) {
     let candidate = body.slug;
     let count = 0;
-    while (await Product.findOne({ slug: candidate })) {
+    while (await Product.findOne({ slug: candidate, _id: { $ne: id } })) {
       count += 1;
       candidate = `${body.slug}-${Math.random().toString(36).slice(2, 5)}`;
       if (count > 5) break;

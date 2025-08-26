@@ -19,7 +19,7 @@ export default function ProductCard({ product }: { product: unknown }) {
 
   return (
   <motion.a
-      className="group block overflow-hidden surface-card hover:-translate-y-0.5 w-[220px] sm:w-[260px] md:w-[280px] focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+      className="group block overflow-hidden surface-card hover:-translate-y-0.5 w-full min-w-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
       initial={{ opacity: 0, y: 10 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-10%" }}
@@ -33,7 +33,7 @@ export default function ProductCard({ product }: { product: unknown }) {
             src={imgSrc}
             alt={title}
             fill
-            sizes="(min-width: 1024px) 280px, (min-width: 640px) 260px, 220px"
+            sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
             className="object-cover block max-w-full w-full h-full group-hover:scale-[1.03] transition-transform will-change-transform"
           />
         ) : (

@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { formatPKR } from "@/lib/currency";
 import Image from "next/image";
 import { polishImageUrl } from "@/lib/images";
@@ -50,6 +50,11 @@ export default function AdminPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showModal, setShowModal] = useState<boolean>(false);
   const [settings, setSettings] = useState<Settings | null>(null);
+  const [isProtected, setIsProtected] = useState<boolean>(false);
+  const [authorized, setAuthorized] = useState<boolean>(false);
+  const [passwordAttempt, setPasswordAttempt] = useState<string>("");
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [keepLogged, setKeepLogged] = useState<boolean>(false);
   const [settingsSaving, setSettingsSaving] = useState(false);
   const [form, setForm] = useState<ProductForm>({ title: "", description: "", price: 0, imageUrl: "", images: [], inStock: true, onSale: false });
   const [sortBy, setSortBy] = useState<"title-asc" | "title-desc" | "newest" | "oldest" | "price-asc" | "price-desc">("title-asc");
@@ -61,24 +66,82 @@ export default function AdminPage() {
   // Keep a separate string state for price so users can freely type
   const [priceInput, setPriceInput] = useState<string>("");
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await fetch("/api/products");
-        const data = await res.json();
-        setItems(Array.isArray(data) ? data : []);
-      } catch (err) {
-        console.error(err);
+
+  // Helper to load products with a small retry and safe type checks
+  const loadProducts = useCallback(async (retry = true) => {
+    try {
+      const res = await fetch("/api/products");
+      if (!res.ok) throw new Error(`Failed to fetch products ${res.status}`);
+      const data = await res.json();
+      setItems(Array.isArray(data) ? data : []);
+      return true;
+    } catch (err) {
+      console.warn("loadProducts error", err);
+      if (retry) {
+        // brief backoff then retry once
+        await new Promise((r) => setTimeout(r, 250));
+        return loadProducts(false);
       }
-      try {
+      setItems([]);
+      return false;
+    }
+  }, []);
+
+  const loadInitial = useCallback(async () => {
+    try {
+      // Check if admin is protected
+      const check = await fetch("/api/admin-auth", { credentials: 'same-origin' });
+      const cj = await check.json();
+      setIsProtected(!!cj?.protected);
+      if (!cj?.protected) {
+        // not protected, proceed to load data
+        await loadProducts();
+        try {
+          const sres = await fetch("/api/settings");
+          const sdata = await sres.json();
+          setSettings(sdata || {});
+        } catch (err) {
+          console.error("Failed to load settings", err);
+        }
+      } else if (cj?.ok) {
+        // protected but cookie indicates we're already authorized
+        setAuthorized(true);
+        await loadProducts();
+        try {
+          const sres = await fetch("/api/settings");
+          const sdata = await sres.json();
+          setSettings(sdata || {});
+        } catch (err) {
+          console.error("Failed to load settings", err);
+        }
+      }
+    } catch {
+      console.error("Failed to init admin page");
+    }
+  }, [loadProducts]);
+  useEffect(() => { void loadInitial(); }, [loadInitial]);
+
+  
+
+  async function verifyPassword() {
+    setAuthError(null);
+    try {
+  const res = await fetch("/api/admin-auth", { method: "POST", body: JSON.stringify({ password: passwordAttempt, keep: keepLogged }), headers: { "Content-Type": "application/json" }, credentials: 'same-origin' });
+      const j = await res.json();
+      if (j?.ok) {
+        setAuthorized(true);
+  // load data
+  await loadProducts();
         const sres = await fetch("/api/settings");
         const sdata = await sres.json();
         setSettings(sdata || {});
-      } catch (err) {
-        console.error("Failed to load settings", err);
+      } else {
+        setAuthError("Incorrect password");
       }
-    })();
-  }, []);
+  } catch {
+      setAuthError("Failed to verify password");
+    }
+  }
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -203,7 +266,26 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="">
+    <div className="relative">
+      {isProtected && !authorized ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
+          <div className="bg-background max-w-md w-full p-6 rounded-lg outline-light">
+            <h2 className="text-lg font-semibold mb-2">Admin access</h2>
+            <p className="text-sm text-muted mb-4">Enter admin password to continue.</p>
+            <input type="password" value={passwordAttempt} onChange={(e) => setPasswordAttempt(e.target.value)} className="w-full rounded-md border px-3 py-2 mb-3" />
+            {/* Keep me logged in checkbox */}
+            <label className="flex items-center gap-2 text-sm mb-3">
+              <input type="checkbox" checked={keepLogged} onChange={(e) => setKeepLogged(e.target.checked)} className="form-checkbox h-4 w-4" />
+              <span className="select-none">Keep me logged in</span>
+            </label>
+            {authError ? <div className="text-rose-600 text-sm mb-2">{authError}</div> : null}
+            <div className="flex gap-2 justify-end">
+              <button className="btn-outline" onClick={() => { setPasswordAttempt(""); }}>Clear</button>
+              <button className="btn-primary" onClick={() => verifyPassword()}>Enter</button>
+            </div>
+          </div>
+        </div>
+      ) : null}
       <div className="min-h-screen grid md:grid-cols-[220px_1fr]">
       {/* Sidebar */}
   <aside className="hidden md:flex flex-col border-r border-black/10 dark:border-white/10">
@@ -250,6 +332,19 @@ export default function AdminPage() {
               }
             }}>{settingsSaving ? "Saving..." : "Save"}</button>
           )}
+      {/* Logout button when authorized */}
+      {authorized ? (
+        <button className="ml-2 btn-outline" onClick={async () => {
+          try {
+            await fetch('/api/admin-auth', { method: 'DELETE', credentials: 'same-origin' });
+          } catch (e) {
+            console.error('Logout failed', e);
+          }
+          setAuthorized(false);
+          setIsProtected(true);
+          setPasswordAttempt('');
+        }}>Logout</button>
+      ) : null}
         </header>
         {/* Mobile tabs for navigation */}
         <div className="md:hidden border-b border-black/10 dark:border-white/10 px-4 py-2 flex gap-2 bg-background sticky top-16 z-10">

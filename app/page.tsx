@@ -54,8 +54,10 @@ export default async function Home() {
           <h2 className="lux-heading text-xl sm:text-2xl font-semibold tracking-tight heading-underline">Featured Pieces</h2>
           <Link href="/products" className="text-sm hover:opacity-80 hidden sm:inline">View all</Link>
         </div>
-  <div className="mx-auto max-w-7xl flex flex-wrap justify-center gap-5 sm:gap-6 lg:gap-8 px-4 sm:px-6 lg:px-8 outline-light">
-          {products.length ? products.map((p) => {
+  <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 outline-light">
+          {products.length ? (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-5 sm:gap-6 lg:gap-8">
+              {products.map((p) => {
             function getId(x: unknown) {
               if (!x || typeof x !== "object") return Math.random().toString(36).slice(2, 9);
               const o = x as Record<string, unknown>;
@@ -72,7 +74,11 @@ export default async function Home() {
             }
             const id = getId(p);
             return <ProductCard key={id} product={p} />;
-          }) : <div className="text-muted">No products yet.</div>}
+              })}
+            </div>
+          ) : (
+            <div className="text-muted">No products yet.</div>
+          )}
         </div>
   </section>
   {/* Second hero below Featured (individual content) */}
