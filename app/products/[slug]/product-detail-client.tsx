@@ -47,9 +47,10 @@ export default function ProductDetailClient({ product }: { product?: IProduct | 
         <div>
           <motion.div className="relative overflow-hidden surface-card" variants={{ hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0, transition: { duration: 0.45, ease: "easeOut" } } }}>
             {images.length ? (
-              <div className="relative" style={{ paddingTop: "75%" }}>
+              // make carousel taller (portrait 2:3) so product images are more prominent
+              <div className="relative" style={{ paddingTop: "150%" }}>
                 <Image
-                  src={polishImageUrl(images[index], ["c_fill", "g_auto", "w_1200", "h_900"]) }
+                  src={polishImageUrl(images[index], ["c_fill", "g_auto", "w_1200", "h_1800"]) }
                   alt={`${title} ${index + 1}`}
                   fill
                   sizes="(min-width: 1024px) 600px, (min-width: 768px) 50vw, 100vw"
@@ -59,15 +60,15 @@ export default function ProductDetailClient({ product }: { product?: IProduct | 
                 <button className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/45 hover:bg-black/60 text-white rounded-full w-8 h-8 flex items-center justify-center shadow-sm" onClick={next} aria-label="Next">›</button>
               </div>
             ) : (
-              <div className="relative aspect-square overflow-hidden surface-card flex items-center justify-center text-muted">No image</div>
+              <div className="relative aspect-[2/3] overflow-hidden surface-card flex items-center justify-center text-muted">No image</div>
             )}
           </motion.div>
           {images.length > 1 ? (
             <motion.div className="flex gap-2 mt-3" variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0, transition: { duration: 0.35 } } }}>
               {images.map((img, i) => (
         <button key={img} onClick={() => setIndex(i)} className={`rounded overflow-hidden border ${i === index ? "ring-2 ring-black/20 dark:ring-white/30" : "border-black/10 dark:border-white/10"}`}>
-                  <div style={{ width: 80, height: 60, position: "relative" }}>
-          <Image src={polishImageUrl(img, ["c_fill", "g_auto", "w_160", "h_120"]) } alt={`thumb-${i}`} fill sizes="80px" className="object-cover" />
+                  <div style={{ width: 80, height: 120, position: "relative" }}>
+          <Image src={polishImageUrl(img, ["c_fill", "g_auto", "w_160", "h_240"]) } alt={`thumb-${i}`} fill sizes="80px" className="object-cover" />
                   </div>
                 </button>
               ))}
