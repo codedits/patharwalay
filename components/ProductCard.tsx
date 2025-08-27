@@ -20,7 +20,8 @@ export default function ProductCard({ product }: { product: unknown }) {
 
   return (
   <motion.a
-      className="group block overflow-hidden surface-card hover:-translate-y-0.5 w-full min-w-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+      className="group block overflow-hidden surface-card light-shadow hover:-translate-y-0.5 w-full min-w-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+      style={{ borderRadius: "0.24rem" }}
       initial={{ opacity: 0, y: 10 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-10%" }}
@@ -28,7 +29,7 @@ export default function ProductCard({ product }: { product: unknown }) {
       transition={{ duration: 0.4, ease: "easeOut" }}
       href={`/products/${href}`}
     >
-  <div className="relative aspect-[2/3] card-media max-w-full">
+  <div className="relative aspect-[2/3] card-media max-w-full" style={{ borderRadius: "0.24rem" }}>
         {imgSrc ? (
           <Image
             src={imgSrc}
