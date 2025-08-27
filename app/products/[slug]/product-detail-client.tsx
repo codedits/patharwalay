@@ -26,6 +26,20 @@ export default function ProductDetailClient({ product }: { product?: IProduct | 
     setIndex(0);
   }, [product]);
 
+  function handleBuyNow() {
+    try {
+      const phone = "923440701990"; // admin WhatsApp number (international, no +)
+      const productLink = typeof window !== "undefined" ? window.location.href : "";
+      const message = `Hello, I want to buy this product: ${productLink}`;
+      const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+      window.open(url, "_blank");
+    } catch (err) {
+      // fail silently in SSR or restricted environments
+      // eslint-disable-next-line no-console
+      console.error("Failed to open WhatsApp link", err);
+    }
+  }
+
   function prev() {
     setIndex((i) => (images.length ? (i - 1 + images.length) % images.length : 0));
   }
@@ -84,7 +98,15 @@ export default function ProductDetailClient({ product }: { product?: IProduct | 
             <span className="ml-2 text-xs text-muted">4.8 (128)</span>
           </div>
           <div className="pt-2">
-            <motion.button className="btn-red red-glow" whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>Buy now</motion.button>
+            <motion.button
+              className="btn-red red-glow"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={handleBuyNow}
+              aria-label="Buy now via WhatsApp"
+            >
+              Buy now
+            </motion.button>
           </div>
           <div className="pt-6 text-sm leading-6">
             {product?.description ? (
