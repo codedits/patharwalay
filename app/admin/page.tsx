@@ -201,13 +201,34 @@ export default function AdminPage() {
     const fd = new FormData();
     fd.append("file", file);
     const res = await fetch("/api/upload", { method: "POST", body: fd });
-    const data = await res.json();
+    // The server (or an intermediate proxy) may sometimes return a non-JSON
+    // error body (for example: "Request Entity Too Large"). Parsing that as
+    // JSON throws a SyntaxError and produces the unreadable message you saw.
+    // Be defensive: try to parse JSON, and if that fails fall back to plain text.
+    let data: unknown = null;
+    try {
+      data = await res.json();
+    } catch (_parseErr) {
+      const text = await res.text();
+      data = { error: text || `Upload failed with status ${res.status}` };
+    }
+
+    // Safely extract string fields from unknown parsed data
+    const getString = (obj: unknown, key: string): string | undefined => {
+      if (!obj || typeof obj !== "object") return undefined;
+      const v = (obj as Record<string, unknown>)[key];
+      return typeof v === "string" ? v : undefined;
+    };
+
     if (!res.ok) {
-      const err = (data && (data.error || data.message)) ? (data.error || data.message) : `Upload failed with status ${res.status}`;
+      const err = getString(data, "error") || getString(data, "message") || `Upload failed with status ${res.status}`;
       throw new Error(String(err));
     }
-    const url = data.secure_url || data.url || data.secureUrl || "";
-    const publicId = (data.raw && (data.raw.public_id as string)) || undefined;
+
+    const url = getString(data, "secure_url") || getString(data, "url") || getString(data, "secureUrl") || "";
+    const publicId = typeof data === "object" && data && "raw" in (data as Record<string, unknown>) && typeof (data as Record<string, unknown>).raw === "object"
+      ? ( ((data as Record<string, unknown>).raw as Record<string, unknown>).public_id as string | undefined )
+      : undefined;
     return { url, publicId };
   }
 

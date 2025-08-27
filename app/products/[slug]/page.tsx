@@ -1,6 +1,7 @@
 import ProductDetailClient from "./product-detail-client";
 import { connectToDatabase } from "@/lib/db";
 import { Product as ProductModel, IProduct } from "@/models/Product";
+import { shimmerDataURL } from "@/lib/images";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -39,7 +40,9 @@ export default async function ProductDetail({ params }: Props) {
     if (sample) product = { title: sample.name, price: sample.price, imageUrl: sample.image, slug: sample.id } as IProduct;
   }
 
-  return <ProductDetailClient product={product} />;
+  // Attach a server-side blur placeholder for initial render (portrait 2:3)
+  const blur = shimmerDataURL(60, 90);
+  return <ProductDetailClient product={product} initialBlurDataURL={blur} />;
 }
 
 

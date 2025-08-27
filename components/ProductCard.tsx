@@ -8,13 +8,13 @@ export type Product = { id: string; name: string; price: number; image: string }
 
 type DBProduct = { _id?: string; title?: string; price?: number; imageUrl?: string; slug?: string; onSale?: boolean; inStock?: boolean };
 
-export default function ProductCard({ product }: { product: unknown }) {
+export default function ProductCard({ product, blurDataURL }: { product: unknown; blurDataURL?: string }) {
   const p = product as Product | DBProduct;
   const href = (p as DBProduct).slug || (p as Product).id || "";
   const imgArray = (p as unknown as { images?: string[] }).images || [];
   const rawImg = (p as DBProduct).imageUrl || imgArray[0] || (p as Product).image || "";
   // Use a taller portrait crop for cards to look more like portrait images
-  const imgSrc = polishImageUrl(rawImg, ["c_fill", "g_auto", "w_600", "h_900"]);
+  const imgSrc = polishImageUrl(rawImg, ["c_fill", "g_auto", "w_480", "h_720"]);
   const title = (p as DBProduct).title || (p as Product).name || "product";
   const price = ((p as DBProduct).price || (p as Product).price || 0) as number;
 
@@ -22,20 +22,22 @@ export default function ProductCard({ product }: { product: unknown }) {
   <motion.a
       className="group block overflow-hidden surface-card light-shadow hover:-translate-y-0.5 w-full min-w-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
       style={{ borderRadius: "0.24rem" }}
-      initial={{ opacity: 0, y: 10 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-10%" }}
+  initial={{ opacity: 0, y: 8 }}
+  whileInView={{ opacity: 1, y: 0 }}
+  viewport={{ once: true, margin: "-10%" }}
       whileHover={{ translateY: -2 }}
-      transition={{ duration: 0.4, ease: "easeOut" }}
+  transition={{ duration: 0.3, ease: "easeOut" }}
       href={`/products/${href}`}
     >
   <div className="relative aspect-[2/3] card-media max-w-full" style={{ borderRadius: "0.24rem" }}>
-        {imgSrc ? (
+    {imgSrc ? (
           <Image
             src={imgSrc}
             alt={title}
             fill
             sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
+      placeholder={blurDataURL ? "blur" : undefined}
+      blurDataURL={blurDataURL}
             className="object-cover block max-w-full w-full h-full group-hover:scale-[1.03] transition-transform will-change-transform"
           />
         ) : (

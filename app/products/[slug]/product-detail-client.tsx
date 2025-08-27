@@ -7,7 +7,7 @@ import type { IProduct } from "@/models/Product";
 import { formatPKR } from "@/lib/currency";
 import { motion } from "framer-motion";
 
-export default function ProductDetailClient({ product }: { product?: IProduct | null }) {
+export default function ProductDetailClient({ product, initialBlurDataURL }: { product?: IProduct | null; initialBlurDataURL?: string }) {
   const title = product?.title || (product?.slug || "").replace(/-/g, " ");
   const images: string[] = (() => {
     if (!product) return [];
@@ -26,6 +26,91 @@ export default function ProductDetailClient({ product }: { product?: IProduct | 
     setIndex(0);
   }, [product]);
 
+  // Preload adjacent images to make next/prev feel snappier
+  useEffect(() => {
+    if (!images || images.length <= 1) return;
+    const nextIdx = (index + 1) % images.length;
+    const prevIdx = (index - 1 + images.length) % images.length;
+    const preloads: HTMLImageElement[] = [];
+    try {
+      [nextIdx, prevIdx].forEach((i) => {
+        const url = polishImageUrl(images[i], ["c_fill", "g_auto", "w_900", "h_1350"]);
+        const img = typeof document !== "undefined" ? document.createElement("img") as HTMLImageElement : null;
+        if (img) {
+          img.src = url;
+          preloads.push(img);
+        }
+      });
+  } catch {
+      // ignore preload failures
+    }
+    return () => {
+      // drop references (browser may still keep them cached)
+      preloads.length = 0;
+    };
+  }, [index, images]);
+
+  // LQIP: fetch a very small blurred image and set it as blurDataURL for Next/Image
+  const [blurDataUrl, setBlurDataUrl] = useState<string | undefined>(initialBlurDataURL);
+  useEffect(() => {
+    let cancelled = false;
+    async function makeLQIP() {
+      if (!images || !images.length) return setBlurDataUrl(undefined);
+      try {
+        // very small, low-quality transform for a fast tiny preview
+        const tiny = polishImageUrl(images[index], ["c_fill", "g_auto", "w_40", "h_60", "q_1"]);
+        const res = await fetch(tiny, { cache: "force-cache" });
+        if (!res.ok) return;
+        const blob = await res.blob();
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          if (cancelled) return;
+          const data = reader.result as string | null;
+          if (data) setBlurDataUrl(data);
+        };
+        reader.readAsDataURL(blob);
+  } catch {
+        // ignore
+      }
+    }
+    // If we already have a server-provided blur, keep it for first image; refresh when index changes
+    if (!initialBlurDataURL || index !== 0) {
+      makeLQIP();
+    }
+    return () => { cancelled = true; };
+  }, [index, images, initialBlurDataURL]);
+
+  // Preconnect to Cloudinary and preload the current main image for faster startup
+  useEffect(() => {
+    if (typeof document === "undefined" || !images || !images.length) return;
+    const host = "https://res.cloudinary.com";
+    // add preconnect if missing
+    if (!document.querySelector(`link[rel=\"preconnect\"][href=\"${host}\"]`)) {
+      const pc = document.createElement("link");
+      pc.rel = "preconnect";
+      pc.href = host;
+      pc.crossOrigin = "anonymous";
+      document.head.appendChild(pc);
+    }
+    // preload current image
+    const mainUrl = polishImageUrl(images[index], ["c_fill", "g_auto", "w_900", "h_1350"]);
+    // remove existing preload for our image if present
+    const existing = document.querySelectorAll('link[rel="preload"][as="image"]');
+    existing.forEach((n) => {
+      if (n.getAttribute("data-pw-preload") === "1") n.remove();
+    });
+    const pl = document.createElement("link");
+    pl.rel = "preload";
+    pl.as = "image";
+    pl.href = mainUrl;
+    pl.setAttribute("data-pw-preload", "1");
+    document.head.appendChild(pl);
+    return () => {
+      // cleanup preload for this index when unmounting/changing
+      try { pl.remove(); } catch {}
+    };
+  }, [index, images]);
+
   function handleBuyNow() {
     try {
       const phone = "923440701990"; // admin WhatsApp number (international, no +)
@@ -35,8 +120,7 @@ export default function ProductDetailClient({ product }: { product?: IProduct | 
       window.open(url, "_blank");
     } catch (err) {
       // fail silently in SSR or restricted environments
-      // eslint-disable-next-line no-console
-      console.error("Failed to open WhatsApp link", err);
+  console.error("Failed to open WhatsApp link", err);
     }
   }
 
@@ -64,9 +148,12 @@ export default function ProductDetailClient({ product }: { product?: IProduct | 
               // make carousel taller (portrait 2:3) so product images are more prominent
               <div className="relative" style={{ paddingTop: "150%" }}>
                 <Image
-                  src={polishImageUrl(images[index], ["c_fill", "g_auto", "w_1200", "h_1800"]) }
+                  src={polishImageUrl(images[index], ["c_fill", "g_auto", "w_900", "h_1350"]) }
                   alt={`${title} ${index + 1}`}
                   fill
+                  priority={index === 0}
+                  placeholder={blurDataUrl ? "blur" : undefined}
+                  blurDataURL={blurDataUrl}
                   sizes="(min-width: 1024px) 600px, (min-width: 768px) 50vw, 100vw"
                   className="object-cover"
                 />

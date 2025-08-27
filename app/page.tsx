@@ -5,7 +5,6 @@ import { connectToDatabase } from "@/lib/db";
 import { SiteSettings } from "@/models/SiteSettings";
 
 export const dynamic = "force-dynamic";
-import ProductCard from "@/components/ProductCard";
 import About from "@/components/About";
 import { Product } from "@/models/Product";
 import ProductGridClient from "@/components/ProductGridClient";
@@ -17,9 +16,12 @@ export default async function Home() {
       await connectToDatabase();
       doc = await SiteSettings.findOne().lean<ISiteSettings>();
       // normalize legacy casing from DB: heroHeadLine -> heroHeadline
-      if (doc && (doc as unknown as Record<string, unknown>).heroHeadLine && !doc.heroHeadline) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        doc.heroHeadline = (doc as any).heroHeadLine as string;
+      if (doc && !doc.heroHeadline) {
+        const rec = doc as unknown as Record<string, unknown>;
+        const legacy = rec.heroHeadLine;
+        if (typeof legacy === "string") {
+          doc.heroHeadline = legacy;
+        }
       }
     }
   } catch {

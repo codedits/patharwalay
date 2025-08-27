@@ -41,7 +41,6 @@ export default function ProductGridClient({ initialProducts = [], endpoint = "/a
             return;
           }
           // backoff
-          // eslint-disable-next-line no-await-in-loop
           await new Promise((r) => setTimeout(r, 300 * Math.pow(2, i - 1)));
         }
       }
@@ -52,7 +51,7 @@ export default function ProductGridClient({ initialProducts = [], endpoint = "/a
     return () => {
       mounted = false;
     };
-  }, [endpoint]);
+  }, [endpoint, initialProducts]);
 
   if (loading) {
     return <div className="grid grid-cols-2 md:grid-cols-4 gap-5 sm:gap-6 lg:gap-8">{Array.from({ length: 4 }).map((_, i) => <div key={i} className="h-[320px] bg-black/5 animate-pulse" />)}</div>;
@@ -72,7 +71,9 @@ export default function ProductGridClient({ initialProducts = [], endpoint = "/a
           if (typeof o.id === "string") return o.id;
           return Math.random().toString(36).slice(2, 9);
         })();
-        return <ProductCard key={key} product={p} />;
+  // Provide a default shimmer blur for cards (portrait 2:3)
+  const blur = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0nNjAnIGhlaWdodD0nOTAnIHZpZXdCb3g9JzAgMCA2MCA5MCcgeG1sbnM9J2h0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnJyBwcmVzZXJ2ZUFzcGVjdFJhdGlvPSdub25lJyA+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSdnJz48c3RvcCBzdG9wLWNvbG9yPScjZjZmN2Y4JyBvZmZzZXQ9JzIwJScvPjxzdG9wIHN0b3AtY29sb3I9JyNlZGVlZjEnIG9mZnNldD0nNTAlJy8+PHN0b3Agc3RvcC1jb2xvcj0nI2Y2ZjdmOCcgb2Zmc2V0PSc3MCUnLz48L2xpbmVhckdyYWRpZW50PjwvZGVmcz48cmVjdCB3aWR0aD0nNjAnIGhlaWdodD0nOTAnIGZpbGw9JyNmNmY3ZjgnIC8+PHJlY3QgaWQ9J3InIHdpZHRoPSc2MCcgaGVpZ2h0PSc5MCcgZmlsbD0ndXJsKCNnKScgLz48YW5pbWF0ZSB4bGluazpocmVmPSIjciIgYXR0cmlidXRlTmFtZT0ieCIgZnJvbT0iLTYwIiB0bz0iNjAiIGR1cj0iMS4yc yIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiIC8+PC9zdmc+";
+  return <ProductCard key={key} product={p} blurDataURL={blur} />;
       })}
     </div>
   );

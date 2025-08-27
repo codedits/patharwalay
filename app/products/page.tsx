@@ -1,4 +1,3 @@
-import ProductCard from "@/components/ProductCard";
 import ProductGridClient from "@/components/ProductGridClient";
 import { connectToDatabase } from "@/lib/db";
 import { Product } from "@/models/Product";

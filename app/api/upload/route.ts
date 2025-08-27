@@ -32,6 +32,19 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Expected multipart/form-data" }, { status: 400 });
     }
 
+    // If client (or an intermediate proxy) provides Content-Length we can
+    // proactively reject very large uploads with a JSON response. Some
+    // platforms return a plain-text "Request Entity Too Large" before the
+    // route runs; this check helps when the header is present.
+    const contentLength = req.headers.get("content-length");
+    const MAX_BYTES = 5 * 1024 * 1024; // 5 MiB
+    if (contentLength) {
+      const len = Number(contentLength);
+      if (!Number.isNaN(len) && len > MAX_BYTES) {
+        return NextResponse.json({ error: `File too large. Max allowed ${Math.round(MAX_BYTES / 1024 / 1024)} MB` }, { status: 413 });
+      }
+    }
+
   const formData = await req.formData();
   const file = formData.get("file");
   // Avoid relying on global File in Node; check for arrayBuffer function instead

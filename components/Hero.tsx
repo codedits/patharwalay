@@ -3,6 +3,7 @@ import Image from "next/image";
 import { polishImageUrl } from "@/lib/images";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { shimmerDataURL } from "@/lib/images";
 
 export default function Hero({ imageUrl, headline, tagline, showCta = true, align = "left", size = "default", height = "normal" }: { imageUrl?: string; headline?: string; tagline?: string; showCta?: boolean; align?: "left" | "center"; size?: "default" | "lg"; height?: "short" | "normal" | "tall" }) {
   const heightClass = height === "short"
@@ -14,11 +15,14 @@ export default function Hero({ imageUrl, headline, tagline, showCta = true, alig
     <section className="relative overflow-hidden full-bleed border-b border-black/10 dark:border-white/10">
     {imageUrl ? (
         <Image
-      src={polishImageUrl(imageUrl, ["c_fill", "g_auto", "w_1920", "h_960"]) }
+          // Use responsive transforms: smaller on mobile, larger on desktop
+          src={polishImageUrl(imageUrl, ["c_fill", "g_auto"]) }
           alt="Gemstone banner"
           width={1920}
-          height={720}
+          height={960}
           priority
+          placeholder="blur"
+          blurDataURL={shimmerDataURL(60, 30)}
           sizes="100vw"
           className={`${heightClass} w-full object-cover`}
         />

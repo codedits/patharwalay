@@ -48,6 +48,10 @@ export default function RootLayout({
 }>) {
   return (
   <html lang="en" suppressHydrationWarning>
+      <head>
+        {/* Speed up first connection to Cloudinary (image CDN) */}
+        <link rel="preconnect" href="https://res.cloudinary.com" crossOrigin="anonymous" />
+      </head>
   <body className={`${geistSans.variable} ${geistMono.variable} ${cormorant.variable} ${poppins.variable} antialiased bg-background text-foreground`}>
         <script
           dangerouslySetInnerHTML={{

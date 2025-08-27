@@ -40,13 +40,11 @@ export async function connectToDatabase(): Promise<typeof mongoose> {
     } catch (err) {
       // clear the rejected promise so next loop iteration can create a new one
       // and allow backoff before retrying
-      // eslint-disable-next-line no-console
       console.warn(`Mongo connect attempt ${attempt} failed: ${String(err)}`);
       cached!.promise = null;
       if (attempt === maxAttempts) throw err;
       // exponential backoff: 500ms, 1000ms, 2000ms
       const backoff = 500 * Math.pow(2, attempt - 1);
-      // eslint-disable-next-line no-await-in-loop
       await new Promise((res) => setTimeout(res, backoff));
     }
   }
