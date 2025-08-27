@@ -1,4 +1,5 @@
 import ProductCard from "@/components/ProductCard";
+import ProductGridClient from "@/components/ProductGridClient";
 import { connectToDatabase } from "@/lib/db";
 import { Product } from "@/models/Product";
 import { SiteSettings } from "@/models/SiteSettings";
@@ -19,8 +20,8 @@ export default async function ProductsPage({ searchParams }: { searchParams?: Pr
   const q = qRaw.trim();
   try {
     if (process.env.MONGODB_URI) {
-      await connectToDatabase();
-      settings = await SiteSettings.findOne().lean<{ productsHeroImageUrl?: string; productsHeroHeadline?: string; productsHeroTagline?: string }>();
+  await connectToDatabase();
+  settings = await SiteSettings.findOne().lean<{ productsHeroImageUrl?: string; productsHeroHeadline?: string; productsHeroTagline?: string }>();
       const filter = q
         ? {
             $or: [
@@ -29,7 +30,8 @@ export default async function ProductsPage({ searchParams }: { searchParams?: Pr
             ],
           }
         : {};
-      const raw = await Product.find(filter).sort({ createdAt: -1 }).lean();
+  const projection = { title: 1, price: 1, images: 1, imageUrl: 1, slug: 1, onSale: 1, inStock: 1 };
+  const raw = await Product.find(filter, projection).sort({ createdAt: -1 }).lean();
       products = raw.map((p) => {
         const r = p as unknown as Record<string, unknown>;
         return { ...r, _id: r._id ? String(r._id) : undefined };
@@ -44,8 +46,8 @@ export default async function ProductsPage({ searchParams }: { searchParams?: Pr
       {settings?.productsHeroImageUrl || settings?.productsHeroHeadline || settings?.productsHeroTagline ? (
         <Hero imageUrl={settings?.productsHeroImageUrl} headline={settings?.productsHeroHeadline} tagline={settings?.productsHeroTagline} align="center" height="short" showCta={false} />
       ) : null}
-      <div className="mt-8 sm:mt-10" />
-      <div className="flex items-end justify-between gap-4">
+  <div className="mt-8 sm:mt-10" />
+  <div className="flex items-end justify-between gap-4">
         <div>
           <h1 className="lux-heading text-2xl sm:text-3xl font-semibold tracking-tight heading-underline">All Products</h1>
           <p className="text-muted">{q ? `Showing results for “${q}”` : "Explore our curated gemstone selection."}</p>
@@ -53,22 +55,8 @@ export default async function ProductsPage({ searchParams }: { searchParams?: Pr
       </div>
 
   <div className="w-full">
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-5 lg:gap-6">
-        {products.length ? (
-          products.map((p) => {
-            const key = (() => {
-              const o = p as Record<string, unknown>;
-              if (typeof o._id === "string") return o._id;
-              if (typeof o.slug === "string") return o.slug;
-              if (typeof o.id === "string") return o.id;
-              return Math.random().toString(36).slice(2, 9);
-            })();
-            return <ProductCard key={key} product={p} />;
-          })
-        ) : (
-          <div className="text-muted">{q ? "No matching products found." : "No products yet."}</div>
-        )}
-      </div>
+      {/* client-side grid will retry fetching if SSR returned no products */}
+      <ProductGridClient initialProducts={products} endpoint="/api/products" />
   </div>
     </div>
   );

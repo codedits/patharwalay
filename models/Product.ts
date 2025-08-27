@@ -20,12 +20,16 @@ const ProductSchema = new Schema<IProduct>(
   imageUrl: String,
   images: [String],
     category: String,
-    slug: { type: String, required: true, unique: true },
+  slug: { type: String, required: true },
     onSale: { type: Boolean, default: false },
     inStock: { type: Boolean, default: true },
   },
   { timestamps: true }
 );
+
+// Indexes: unique slug for fast lookups and createdAt for efficient sorting/limit queries
+ProductSchema.index({ slug: 1 }, { unique: true });
+ProductSchema.index({ createdAt: -1 });
 
 export const Product: Model<IProduct> =
   mongoose.models.Product || mongoose.model<IProduct>("Product", ProductSchema);

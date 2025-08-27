@@ -49,11 +49,11 @@ export default function Hero({ imageUrl, headline, tagline, showCta = true, alig
             {tagline || "Handpicked gemstones set with precision—crafted to be worn, loved, and passed down."}
           </motion.p>
           {showCta && (
-            <motion.div className="mt-6" variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" } } }}>
-              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                <Link href="/products" className="btn-red red-glow">Shop now</Link>
+              <motion.div className="mt-6" variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" } } }}>
+                <div>
+                  <Link href="/products" className="btn-glass rounded-md px-6 py-3">Explore products</Link>
+                </div>
               </motion.div>
-            </motion.div>
           )}
         </motion.div>
       </div>

@@ -8,6 +8,7 @@ export const dynamic = "force-dynamic";
 import ProductCard from "@/components/ProductCard";
 import About from "@/components/About";
 import { Product } from "@/models/Product";
+import ProductGridClient from "@/components/ProductGridClient";
 
 export default async function Home() {
   let doc: ISiteSettings | null = null;
@@ -28,8 +29,9 @@ export default async function Home() {
   let products: unknown[] = [];
   try {
     if (process.env.MONGODB_URI) {
-      await connectToDatabase();
-      const raw = await Product.find().sort({ createdAt: -1 }).limit(8).lean();
+  await connectToDatabase();
+  const projection = { title: 1, price: 1, images: 1, imageUrl: 1, slug: 1, onSale: 1, inStock: 1 };
+  const raw = await Product.find({}, projection).sort({ createdAt: -1 }).limit(8).lean();
       // convert ObjectId to string to ensure serializable plain object
       products = raw.map((p) => {
         const r = p as unknown as Record<string, unknown>;
@@ -56,26 +58,7 @@ export default async function Home() {
         </div>
   <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 outline-light">
           {products.length ? (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-5 sm:gap-6 lg:gap-8">
-              {products.map((p) => {
-            function getId(x: unknown) {
-              if (!x || typeof x !== "object") return Math.random().toString(36).slice(2, 9);
-              const o = x as Record<string, unknown>;
-              if (o._id) {
-                // _id from Mongo may be an ObjectId  call toString if available
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const maybe = (o._id as any);
-                if (typeof maybe === "string") return maybe;
-                if (maybe && typeof maybe.toString === "function") return maybe.toString();
-              }
-              if (typeof o.id === "string") return o.id;
-              if (typeof o.slug === "string") return o.slug;
-              return Math.random().toString(36).slice(2, 9);
-            }
-            const id = getId(p);
-            return <ProductCard key={id} product={p} />;
-              })}
-            </div>
+            <ProductGridClient initialProducts={products} />
           ) : (
             <div className="text-muted">No products yet.</div>
           )}

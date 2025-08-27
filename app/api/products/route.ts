@@ -2,9 +2,23 @@ import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/db";
 import { Product } from "@/models/Product";
 
+// Very small in-memory cache to smooth over short DB hiccups and reduce
+// repeated reads during bursts. TTL is intentionally short to keep data fresh.
+let cachedProducts: { ts: number; data: unknown[] } | null = null;
+const CACHE_TTL_MS = 2000; // 2 seconds
+
 export async function GET() {
+  const now = Date.now();
+  if (cachedProducts && now - cachedProducts.ts < CACHE_TTL_MS) {
+    return NextResponse.json(cachedProducts.data);
+  }
+
   await connectToDatabase();
-  const items = await Product.find().sort({ createdAt: -1 }).lean();
+  const projection = { title: 1, price: 1, images: 1, imageUrl: 1, slug: 1, onSale: 1, inStock: 1 };
+  const items = await Product.find({}, projection).sort({ createdAt: -1 }).lean();
+
+  // cache a shallow copy
+  cachedProducts = { ts: Date.now(), data: Array.isArray(items) ? items.slice(0, 2000) : [] };
   return NextResponse.json(items);
 }
 

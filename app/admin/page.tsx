@@ -302,49 +302,51 @@ export default function AdminPage() {
     {/* Main */}
   <main className="flex-1 flex flex-col">
         {/* Header */}
-  <header className="sticky top-0 z-10 h-16 border-b border-black/10 dark:border-white/10 bg-white/70 dark:bg-black/30 backdrop-blur supports-[backdrop-filter]:bg-white/40 flex items-center px-4 gap-3">
+  <header className="sticky top-0 z-10 border-b border-black/10 dark:border-white/10 bg-white/70 dark:bg-black/30 backdrop-blur supports-[backdrop-filter]:bg-white/40 flex flex-col md:flex-row items-center px-4 gap-3 py-2 md:py-0">
           <div className="md:hidden text-base font-semibold">Admin</div>
-          <div className="relative flex-1 max-w-xl">
+          <div className="relative flex-1 md:max-w-xl w-full">
             <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={active === "products" ? "Search products" : "Search settings"} className="w-full rounded-md border px-3 py-2 pl-9" />
             <span className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-muted">🔎</span>
           </div>
-      {active === "products" ? (
-            <div className="flex items-center gap-2">
-        <select value={sortBy} onChange={(e) => setSortBy(e.target.value as typeof sortBy)} className="rounded-md border px-2 py-2 text-sm hidden sm:block">
-                <option value="title-asc">Title A–Z</option>
-                <option value="title-desc">Title Z–A</option>
-                <option value="newest">Newest</option>
-                <option value="oldest">Oldest</option>
-                <option value="price-asc">Price: Low → High</option>
-                <option value="price-desc">Price: High → Low</option>
-              </select>
-              <button className="btn-primary" onClick={() => { resetForm(); setShowModal(true); }}>Add product</button>
-            </div>
-          ) : (
-            <button className="btn-outline" onClick={async () => {
-              try {
-                setSettingsSaving(true);
-                const res = await fetch("/api/settings", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(settings || {}) });
-                const s = await res.json();
-                setSettings(s || {});
-              } finally {
-                setSettingsSaving(false);
-              }
-            }}>{settingsSaving ? "Saving..." : "Save"}</button>
-          )}
-      {/* Logout button when authorized */}
-      {authorized ? (
-        <button className="ml-2 btn-outline" onClick={async () => {
-          try {
-            await fetch('/api/admin-auth', { method: 'DELETE', credentials: 'same-origin' });
-          } catch (e) {
-            console.error('Logout failed', e);
-          }
-          setAuthorized(false);
-          setIsProtected(true);
-          setPasswordAttempt('');
-        }}>Logout</button>
-      ) : null}
+      <div className="w-full md:w-auto flex items-center justify-between md:justify-end gap-2">
+        {active === "products" ? (
+          <div className="flex items-center gap-2 md:gap-3">
+            <select value={sortBy} onChange={(e) => setSortBy(e.target.value as typeof sortBy)} className="rounded-md border px-2 py-2 text-sm hidden sm:block">
+              <option value="title-asc">Title A–Z</option>
+              <option value="title-desc">Title Z–A</option>
+              <option value="newest">Newest</option>
+              <option value="oldest">Oldest</option>
+              <option value="price-asc">Price: Low → High</option>
+              <option value="price-desc">Price: High → Low</option>
+            </select>
+            <button className="btn-primary" onClick={() => { resetForm(); setShowModal(true); }}>Add product</button>
+          </div>
+        ) : (
+          <button className="btn-outline" onClick={async () => {
+            try {
+              setSettingsSaving(true);
+              const res = await fetch("/api/settings", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(settings || {}) });
+              const s = await res.json();
+              setSettings(s || {});
+            } finally {
+              setSettingsSaving(false);
+            }
+          }}>{settingsSaving ? "Saving..." : "Save"}</button>
+        )}
+        {/* Logout button when authorized */}
+        {authorized ? (
+          <button className="ml-2 btn-outline" onClick={async () => {
+            try {
+              await fetch('/api/admin-auth', { method: 'DELETE', credentials: 'same-origin' });
+            } catch (e) {
+              console.error('Logout failed', e);
+            }
+            setAuthorized(false);
+            setIsProtected(true);
+            setPasswordAttempt('');
+          }}>Logout</button>
+        ) : null}
+      </div>
         </header>
         {/* Mobile tabs for navigation */}
         <div className="md:hidden border-b border-black/10 dark:border-white/10 px-4 py-2 flex gap-2 bg-background sticky top-16 z-10">
@@ -369,9 +371,9 @@ export default function AdminPage() {
               <div className="md:hidden grid gap-3">
                 {sorted.map((it) => (
                   <div key={it._id} className="rounded-md border border-black/10 dark:border-white/10 p-3 flex items-center gap-3">
-                    <div className="relative w-16 h-12 bg-black/5 dark:bg-white/10 overflow-hidden rounded">
+                    <div className="relative w-20 h-28 bg-black/5 dark:bg-white/10 overflow-hidden rounded">
                       {it.images?.[0] || it.imageUrl ? (
-                        <Image src={(it.images?.[0] || it.imageUrl)!} alt={it.title} fill className="object-cover" sizes="64px" />
+                        <Image src={(it.images?.[0] || it.imageUrl)!} alt={it.title} fill className="object-cover" sizes="80px" />
                       ) : null}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -406,9 +408,9 @@ export default function AdminPage() {
                       <tr key={it._id} className="border-t border-black/10 dark:border-white/10">
                         <td className="px-3 py-2">
                           <div className="flex items-center gap-3">
-                            <div className="relative w-12 h-9 bg-black/5 dark:bg-white/10 overflow-hidden rounded">
+                            <div className="relative w-20 h-28 bg-black/5 dark:bg-white/10 overflow-hidden rounded">
                               {it.images?.[0] || it.imageUrl ? (
-                                <Image src={(it.images?.[0] || it.imageUrl)!} alt={it.title} fill className="object-cover" sizes="48px" />
+                                <Image src={(it.images?.[0] || it.imageUrl)!} alt={it.title} fill className="object-cover" sizes="80px" />
                               ) : null}
                             </div>
                             <div className="font-medium truncate max-w-[280px]" title={it.title}>{it.title}</div>
@@ -745,7 +747,14 @@ export default function AdminPage() {
                         <div className="relative w-full h-24">
                           <Image src={url} alt={`img-${idx}`} fill className="object-cover" sizes="100px" />
                         </div>
-                        <button type="button" onClick={() => setForm((prev) => ({ ...prev, images: (prev.images || []).filter((u) => u !== url) }))} className="absolute top-1 right-1 bg-white/80 rounded px-1 text-xs">×</button>
+                        <button
+                          type="button"
+                          aria-label="Remove image"
+                          onClick={() => setForm((prev) => ({ ...prev, images: (prev.images || []).filter((u) => u !== url) }))}
+                          className="absolute top-2 right-2 z-30 bg-red-600 text-white hover:bg-red-700 rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold shadow-md border border-white/10"
+                        >
+                          ×
+                        </button>
                       </div>
                     ))}
                   </div>

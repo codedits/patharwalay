@@ -13,7 +13,8 @@ export default function ProductCard({ product }: { product: unknown }) {
   const href = (p as DBProduct).slug || (p as Product).id || "";
   const imgArray = (p as unknown as { images?: string[] }).images || [];
   const rawImg = (p as DBProduct).imageUrl || imgArray[0] || (p as Product).image || "";
-  const imgSrc = polishImageUrl(rawImg, ["c_fill", "g_auto", "w_640", "h_480"]);
+  // Use a taller portrait crop for cards to look more like portrait images
+  const imgSrc = polishImageUrl(rawImg, ["c_fill", "g_auto", "w_600", "h_900"]);
   const title = (p as DBProduct).title || (p as Product).name || "product";
   const price = ((p as DBProduct).price || (p as Product).price || 0) as number;
 
@@ -27,7 +28,7 @@ export default function ProductCard({ product }: { product: unknown }) {
       transition={{ duration: 0.4, ease: "easeOut" }}
       href={`/products/${href}`}
     >
-  <div className="relative aspect-[4/3] card-media max-w-full">
+  <div className="relative aspect-[2/3] card-media max-w-full">
         {imgSrc ? (
           <Image
             src={imgSrc}
