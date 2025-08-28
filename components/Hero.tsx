@@ -42,18 +42,18 @@ export default function Hero({ imageUrl, headline, tagline, showCta = true, alig
         >
           <motion.h1
             className={`lux-heading ${size === "lg" ? "text-4xl sm:text-5xl md:text-6xl" : "text-3xl sm:text-4xl md:text-5xl"} font-semibold text-white tracking-tight drop-shadow-[0_2px_10px_rgba(0,0,0,0.6)] max-w-3xl ${align === "center" ? "text-center mx-auto" : ""}`}
-            variants={{ hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } } }}
+            variants={{ hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0, transition: { duration: 0.5 } } }}
           >
             {headline || "Timeless Gems, Modern Elegance"}
           </motion.h1>
           <motion.p
             className={`mt-4 max-w-xl text-white/90 ${size === "lg" ? "text-base sm:text-lg" : "text-sm sm:text-base"} ${align === "center" ? "text-center mx-auto" : ""}`}
-            variants={{ hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0, transition: { duration: 0.45, ease: "easeOut" } } }}
+            variants={{ hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0, transition: { duration: 0.45 } } }}
           >
             {tagline || "Handpicked gemstones set with precision—crafted to be worn, loved, and passed down."}
           </motion.p>
           {showCta && (
-              <motion.div className="mt-6" variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" } } }}>
+              <motion.div className="mt-6" variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0, transition: { duration: 0.4 } } }}>
                 <div>
                   <Link href="/products" className="btn-glass rounded-md px-6 py-3">Explore products</Link>
                 </div>

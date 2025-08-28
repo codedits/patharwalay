@@ -164,12 +164,14 @@ export default function ProductDetailClient({ product, initialBlurDataURL }: { p
               <div className="relative aspect-[2/3] overflow-hidden surface-card flex items-center justify-center text-muted">No image</div>
             )}
           </motion.div>
-          {images.length > 1 ? (
+            {images.length > 1 ? (
             <motion.div className="flex gap-2 mt-3" variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0, transition: { duration: 0.35 } } }}>
               {images.map((img, i) => (
         <button key={img} onClick={() => setIndex(i)} className={`rounded overflow-hidden border ${i === index ? "ring-2 ring-black/20 dark:ring-white/30" : "border-black/10 dark:border-white/10"}`}>
                   <div style={{ width: 80, height: 120, position: "relative" }}>
-          <Image src={polishImageUrl(img, ["c_fill", "g_auto", "w_160", "h_240"]) } alt={`thumb-${i}`} fill sizes="80px" className="object-cover" />
+          <motion.div whileHover={{ scale: 1.06 }} whileTap={{ scale: 0.98 }}>
+            <Image src={polishImageUrl(img, ["c_fill", "g_auto", "w_160", "h_240"]) } alt={`thumb-${i}`} fill sizes="80px" className="object-cover" />
+          </motion.div>
                   </div>
                 </button>
               ))}
@@ -187,8 +189,9 @@ export default function ProductDetailClient({ product, initialBlurDataURL }: { p
           <div className="pt-2">
             <motion.button
               className="btn-red red-glow"
-              whileHover={{ scale: 1.02 }}
+              whileHover={{ scale: 1.03, boxShadow: "0 8px 24px rgba(0,0,0,0.12)" }}
               whileTap={{ scale: 0.98 }}
+              transition={{ type: "spring", stiffness: 300, damping: 18 }}
               onClick={handleBuyNow}
               aria-label="Buy now via WhatsApp"
             >

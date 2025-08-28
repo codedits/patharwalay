@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import cloudinaryImport from "cloudinary";
+import { ensureAdmin } from "@/lib/auth";
 
 // Ensure this route runs in Node.js (not Edge) so Buffer and Cloudinary SDK work reliably
 export const runtime = "nodejs";
@@ -26,6 +27,8 @@ const cloudinary = (cloudinaryImport as unknown as { v2: CloudinaryV2 }).v2;
 cloudinary.config({ secure: true });
 
 export async function POST(req: Request) {
+  const guard = await ensureAdmin(req);
+  if (guard) return guard;
   try {
     const contentType = req.headers.get("content-type") || "";
     if (!contentType.includes("multipart/form-data")) {
@@ -57,13 +60,16 @@ export async function POST(req: Request) {
   // collect some info for debugging
   const fileName = blob.name as string | undefined;
   const fileType = blob.type as string | undefined;
+  if (fileType && !/^image\//.test(fileType)) {
+    return NextResponse.json({ error: "Only image uploads are allowed" }, { status: 400 });
+  }
   const arrayBuffer = await blob.arrayBuffer();
   const buffer = Buffer.from(arrayBuffer);
   console.log(`/api/upload received file: name=${fileName} type=${fileType} size=${buffer.length}`);
 
     const result = await new Promise<CloudinaryUploadResult>((resolve, reject) => {
       try {
-        const stream = cloudinary.uploader.upload_stream({ resource_type: "image", folder: "products" }, (error, res) => {
+  const stream = cloudinary.uploader.upload_stream({ resource_type: "image", folder: "products" }, (error, res) => {
           if (error || !res) return reject(error || new Error("Upload failed"));
           resolve(res);
         });

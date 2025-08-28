@@ -1,43 +1,48 @@
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/db";
 import { Product } from "@/models/Product";
+import { ensureAdmin } from "@/lib/auth";
+import { escapeRegex, sanitizeProductInput } from "@/lib/validation";
 
-// Very small in-memory cache to smooth over short DB hiccups and reduce
-// repeated reads during bursts. TTL is intentionally short to keep data fresh.
-let cachedProducts: { ts: number; data: unknown[] } | null = null;
+// Small in-memory cache keyed by query params; TTL is short to keep data fresh.
+const productCache = new Map<string, { ts: number; data: unknown[] }>();
 const CACHE_TTL_MS = 2000; // 2 seconds
 
-export async function GET() {
+export async function GET(req: Request) {
   const now = Date.now();
-  if (cachedProducts && now - cachedProducts.ts < CACHE_TTL_MS) {
-    return NextResponse.json(cachedProducts.data);
+  await connectToDatabase();
+  const url = new URL(req.url);
+  const q = (url.searchParams.get("q") || "").trim();
+  const page = Math.max(1, parseInt(url.searchParams.get("page") || "1", 10) || 1);
+  const pageSize = Math.min(100, Math.max(1, parseInt(url.searchParams.get("pageSize") || "24", 10) || 24));
+  const skip = (page - 1) * pageSize;
+  const key = JSON.stringify({ q, page, pageSize });
+  const cached = productCache.get(key);
+  if (cached && now - cached.ts < CACHE_TTL_MS) {
+    return NextResponse.json(cached.data);
   }
 
-  await connectToDatabase();
-  const projection = { title: 1, price: 1, images: 1, imageUrl: 1, slug: 1, onSale: 1, inStock: 1 };
-  const items = await Product.find({}, projection).sort({ createdAt: -1 }).lean();
+  const projection = { title: 1, price: 1, images: 1, imageUrl: 1, slug: 1, onSale: 1, inStock: 1, createdAt: 1 } as const;
+  const filter = q
+    ? { $or: [ { title: { $regex: escapeRegex(q), $options: "i" } }, { description: { $regex: escapeRegex(q), $options: "i" } } ] }
+    : {};
+  const items = await Product.find(filter, projection).sort({ createdAt: -1 }).skip(skip).limit(pageSize).lean();
 
-  // cache a shallow copy
-  cachedProducts = { ts: Date.now(), data: Array.isArray(items) ? items.slice(0, 2000) : [] };
+  // cache a shallow copy for the specific key
+  productCache.set(key, { ts: Date.now(), data: Array.isArray(items) ? items.slice(0, 2000) : [] });
   return NextResponse.json(items);
 }
 
 export async function POST(req: Request) {
+  const guard = await ensureAdmin(req);
+  if (guard) return guard;
   await connectToDatabase();
-  const body = await req.json();
-  // ensure slug exists; generate from title if missing
-  if (!body.slug && body.title) {
-    body.slug = String(body.title).trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+  const raw = await req.json().catch(() => null);
+  const parsed = sanitizeProductInput(raw);
+  if (!parsed.ok) {
+    return NextResponse.json({ error: parsed.error }, { status: 400 });
   }
-
-  // ensure images is an array of strings if provided
-  if (body.images && !Array.isArray(body.images)) {
-    body.images = [String(body.images)];
-  }
-  // cap images to 7 and dedupe
-  if (Array.isArray(body.images)) {
-    body.images = Array.from(new Set(body.images.filter(Boolean).map(String))).slice(0, 7);
-  }
+  const body = parsed.value;
 
   // avoid slug collisions: append short suffix if slug already exists
   if (body.slug) {
@@ -51,8 +56,12 @@ export async function POST(req: Request) {
     body.slug = candidate;
   }
 
-  const created = await Product.create(body);
-  return NextResponse.json(created, { status: 201 });
+  try {
+    const created = await Product.create(body);
+    return NextResponse.json(created, { status: 201 });
+  } catch (e) {
+    return NextResponse.json({ error: "Failed to create product" }, { status: 500 });
+  }
 }
 
 

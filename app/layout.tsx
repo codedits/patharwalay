@@ -25,13 +25,32 @@ const poppins = Poppins({
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700"],
 });
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
   title: {
-  default: "Patthar Walay | Timeless Gems & Fine Jewelry",
-  template: "%s | Patthar Walay",
+    default: "Patthar Walay | Timeless Gems & Fine Jewelry",
+    template: "%s | Patthar Walay",
   },
   description:
     "Discover ethically sourced gemstones and handcrafted jewelry. Shop rings, pendants, and more.",
+  openGraph: {
+    type: "website",
+    url: siteUrl,
+    siteName: "Patthar Walay",
+    title: "Patthar Walay | Timeless Gems & Fine Jewelry",
+    description:
+      "Discover ethically sourced gemstones and handcrafted jewelry. Shop rings, pendants, and more.",
+    locale: "en_US",
+  },
+  twitter: {
+    card: "summary_large_image",
+    creator: "@pattharwalay",
+    site: "@pattharwalay",
+  },
+  icons: {
+    icon: "/favicon.ico",
+  },
 };
 
 export const viewport: Viewport = {

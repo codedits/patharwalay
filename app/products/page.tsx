@@ -3,6 +3,7 @@ import { connectToDatabase } from "@/lib/db";
 import { Product } from "@/models/Product";
 import { SiteSettings } from "@/models/SiteSettings";
 import Hero from "@/components/Hero";
+import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
 
@@ -59,6 +60,23 @@ export default async function ProductsPage({ searchParams }: { searchParams?: Pr
   </div>
     </div>
   );
+}
+
+export async function generateMetadata({ searchParams }: { searchParams?: Promise<{ [key: string]: string | string[] | undefined }> }): Promise<Metadata> {
+  const sp = (searchParams ? await searchParams : {}) || {};
+  const qRaw = (sp.q as string) || (Array.isArray(sp.q) ? (sp.q[0] as string) : "") || "";
+  const q = qRaw.trim();
+  const site = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+  const baseTitle = "All Products";
+  const title = q ? `${baseTitle} – ${q}` : baseTitle;
+  const canonical = q ? `${site}/products?q=${encodeURIComponent(q)}` : `${site}/products`;
+  return {
+    title,
+    description: q ? `Search results for “${q}”.` : "Browse our full gemstone collection.",
+    alternates: { canonical },
+    openGraph: { title, description: q ? `Search results for “${q}”.` : "Browse our full gemstone collection.", url: canonical },
+    twitter: { card: "summary_large_image", title },
+  };
 }
 
 

@@ -54,6 +54,15 @@ body {
     "Apple Color Emoji", "Segoe UI Emoji";
 }
 
+@keyframes float-slow {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+  100% { transform: translateY(0); }
+}
+
+.float-slow {
+  animation: float-slow 6s ease-in-out infinite;
+}
 /* Safety net: avoid horizontal scrolling from full-bleed sections on Windows */
 html, body { overflow-x: hidden; }
 
@@ -304,7 +313,7 @@ html.dark .card-media::after {
 
 /* Simple, solid black shadow utility for light-mode cards */
 .light-shadow {
-  box-shadow: -10px 10px 15px rgba(0,0,0,0.8);
+  box-shadow: -10px 10px +----------px rgba(0,0,0,0.8);
 }
 
 /* When a surface-card uses the light shadow, remove the thin white border and

@@ -3,6 +3,7 @@ import Hero from "@/components/Hero";
 import { ISiteSettings } from "@/models/SiteSettings";
 import { connectToDatabase } from "@/lib/db";
 import { SiteSettings } from "@/models/SiteSettings";
+import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
 import About from "@/components/About";
@@ -75,3 +76,9 @@ export default async function Home() {
     </div>
   );
 }
+
+export const metadata: Metadata = {
+  title: "Timeless Gems & Fine Jewelry",
+  description: "Ethically sourced gemstones and handcrafted jewelry. Discover rings, pendants, and more.",
+  alternates: { canonical: "/" },
+};

@@ -50,7 +50,8 @@ export default function AdminPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showModal, setShowModal] = useState<boolean>(false);
   const [settings, setSettings] = useState<Settings | null>(null);
-  const [isProtected, setIsProtected] = useState<boolean>(false);
+  // Assume protected until checked to avoid a brief window where actions are enabled
+  const [isProtected, setIsProtected] = useState<boolean>(true);
   const [authorized, setAuthorized] = useState<boolean>(false);
   const [passwordAttempt, setPasswordAttempt] = useState<string>("");
   const [authError, setAuthError] = useState<string | null>(null);
@@ -65,6 +66,17 @@ export default function AdminPage() {
   const [openSettingsPanel, setOpenSettingsPanel] = useState<"home" | "second" | "products" | null>("home");
   // Keep a separate string state for price so users can freely type
   const [priceInput, setPriceInput] = useState<string>("");
+
+  // Lock page scroll while an overlay/modal is shown (auth or product modal)
+  useEffect(() => {
+    const shouldLock = (isProtected && !authorized) || showModal;
+    if (shouldLock) {
+      const prev = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => { document.body.style.overflow = prev; };
+    }
+    return;
+  }, [isProtected, authorized, showModal]);
 
 
   // Helper to load products with a small retry and safe type checks
@@ -200,17 +212,26 @@ export default function AdminPage() {
   async function uploadMediaFile(file: File) {
     const fd = new FormData();
     fd.append("file", file);
-    const res = await fetch("/api/upload", { method: "POST", body: fd });
+  const res = await fetch("/api/upload", { method: "POST", body: fd, credentials: 'same-origin' });
     // The server (or an intermediate proxy) may sometimes return a non-JSON
     // error body (for example: "Request Entity Too Large"). Parsing that as
-    // JSON throws a SyntaxError and produces the unreadable message you saw.
-    // Be defensive: try to parse JSON, and if that fails fall back to plain text.
+    // JSON consumes the body and will throw; calling `res.text()` afterwards
+    // fails because the body stream was already read. Use `res.clone()` to
+    // safely attempt multiple reads.
     let data: unknown = null;
     try {
-      data = await res.json();
+      // Try to parse JSON first from a clone so the original response stays
+      // unread for other uses.
+      data = await res.clone().json();
     } catch (_parseErr) {
-      const text = await res.text();
-      data = { error: text || `Upload failed with status ${res.status}` };
+      try {
+        const text = await res.clone().text();
+        data = { error: text || `Upload failed with status ${res.status}` };
+      } catch {
+        // If even reading text fails for some reason, fall back to a generic
+        // error that includes the status code.
+        data = { error: `Upload failed with status ${res.status}` };
+      }
     }
 
     // Safely extract string fields from unknown parsed data
@@ -257,7 +278,17 @@ export default function AdminPage() {
   async function remove(id?: string) {
     if (!id) return;
     if (!confirm("Delete this product?")) return;
-    await fetch(`/api/products/${id}`, { method: "DELETE" });
+    const delRes = await fetch(`/api/products/${id}`, { method: "DELETE", credentials: 'same-origin' });
+    if (!delRes.ok) {
+      if (delRes.status === 401) {
+        alert("You are not authorized. Please enter the admin password.");
+        setIsProtected(true);
+        setAuthorized(false);
+        return;
+      }
+      alert("Delete failed");
+      return;
+    }
     const res = await fetch("/api/products");
     const data = await res.json();
     setItems(Array.isArray(data) ? data : []);
@@ -271,15 +302,29 @@ export default function AdminPage() {
       const primary = form.imageUrl || (form.images && form.images[0]) || "";
       const uniqueImages = Array.from(new Set([...(form.images || [])])).slice(0, 7);
   const body = { ...form, price: Number.isFinite(parsedPrice) ? parsedPrice : 0, imageUrl: primary, images: uniqueImages };
+      let writeRes: Response | null = null;
       if (editingId) {
-        await fetch(`/api/products/${editingId}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+        writeRes = await fetch(`/api/products/${editingId}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body), credentials: 'same-origin' });
       } else {
-        await fetch(`/api/products`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+        writeRes = await fetch(`/api/products`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body), credentials: 'same-origin' });
+      }
+      if (!writeRes?.ok) {
+        if (writeRes && writeRes.status === 401) {
+          alert("You are not authorized. Please enter the admin password.");
+          setIsProtected(true);
+          setAuthorized(false);
+          return;
+        }
+        const msg = await (async () => {
+          try { const j = await writeRes?.json(); return (j && (j.error || j.message)) || writeRes?.statusText || 'Failed'; } catch { return writeRes?.statusText || 'Failed'; }
+        })();
+        alert(`Save failed: ${String(msg)}`);
+        return;
       }
       resetForm();
   setShowModal(false);
-      const res = await fetch("/api/products");
-      const data = await res.json();
+      const refetchRes = await fetch("/api/products");
+      const data = await refetchRes.json();
       setItems(Array.isArray(data) ? data : []);
     } finally {
       setLoading(false);
@@ -289,11 +334,19 @@ export default function AdminPage() {
   return (
     <div className="relative">
       {isProtected && !authorized ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-          <div className="bg-background max-w-md w-full p-6 rounded-lg outline-light">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" role="dialog" aria-modal="true" aria-labelledby="admin-auth-title">
+          <div className="bg-background max-w-md w-full p-6 rounded-lg outline-light shadow-xl">
             <h2 className="text-lg font-semibold mb-2">Admin access</h2>
             <p className="text-sm text-muted mb-4">Enter admin password to continue.</p>
-            <input type="password" value={passwordAttempt} onChange={(e) => setPasswordAttempt(e.target.value)} className="w-full rounded-md border px-3 py-2 mb-3" />
+            <input
+              type="password"
+              autoFocus
+              value={passwordAttempt}
+              onChange={(e) => setPasswordAttempt(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') { void verifyPassword(); } if (e.key === 'Escape') { setPasswordAttempt(''); } }}
+              className="w-full rounded-md border px-3 py-2 mb-3"
+              aria-label="Admin password"
+            />
             {/* Keep me logged in checkbox */}
             <label className="flex items-center gap-2 text-sm mb-3">
               <input type="checkbox" checked={keepLogged} onChange={(e) => setKeepLogged(e.target.checked)} className="form-checkbox h-4 w-4" />
@@ -340,13 +393,18 @@ export default function AdminPage() {
               <option value="price-asc">Price: Low → High</option>
               <option value="price-desc">Price: High → Low</option>
             </select>
-            <button className="btn-primary" onClick={() => { resetForm(); setShowModal(true); }}>Add product</button>
+            <button
+              className="btn-primary disabled:opacity-60"
+              title={isProtected && !authorized ? "Login required" : "Add product"}
+              disabled={isProtected && !authorized}
+              onClick={() => { if (isProtected && !authorized) return; resetForm(); setShowModal(true); }}
+            >Add product</button>
           </div>
         ) : (
           <button className="btn-outline" onClick={async () => {
             try {
               setSettingsSaving(true);
-              const res = await fetch("/api/settings", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(settings || {}) });
+              const res = await fetch("/api/settings", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(settings || {}), credentials: 'same-origin' });
               const s = await res.json();
               setSettings(s || {});
             } finally {
@@ -495,7 +553,7 @@ export default function AdminPage() {
                         const { url, publicId } = await uploadMediaFile(f);
                         if (url) {
                           setSettings((prev) => ({ ...(prev || {}), heroImageUrl: url, heroImagePublicId: publicId }));
-                          await fetch("/api/settings", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...(settings || {}), heroImageUrl: url, heroImagePublicId: publicId }) });
+                          await fetch("/api/settings", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...(settings || {}), heroImageUrl: url, heroImagePublicId: publicId }), credentials: 'same-origin' });
                         }
                       } catch (err) {
                         console.error("Hero upload failed", err);
@@ -512,7 +570,7 @@ export default function AdminPage() {
                           onClick={async () => {
                             const next = { ...(settings || {}), heroImageUrl: "", heroImagePublicId: "" } as Settings;
                             setSettings(next);
-                            await fetch("/api/settings", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(next) });
+                            await fetch("/api/settings", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(next), credentials: 'same-origin' });
                           }}
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -564,7 +622,7 @@ export default function AdminPage() {
                         const { url, publicId } = await uploadMediaFile(f);
                         if (url) {
                           setSettings((prev) => ({ ...(prev || {}), hero2ImageUrl: url, hero2ImagePublicId: publicId }));
-                          await fetch("/api/settings", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...(settings || {}), hero2ImageUrl: url, hero2ImagePublicId: publicId }) });
+                          await fetch("/api/settings", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...(settings || {}), hero2ImageUrl: url, hero2ImagePublicId: publicId }), credentials: 'same-origin' });
                         }
                       } catch (err) {
                         console.error("Second hero upload failed", err);
@@ -581,7 +639,7 @@ export default function AdminPage() {
                           onClick={async () => {
                             const next = { ...(settings || {}), hero2ImageUrl: "", hero2ImagePublicId: "" } as Settings;
                             setSettings(next);
-                            await fetch("/api/settings", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(next) });
+                            await fetch("/api/settings", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(next), credentials: 'same-origin' });
                           }}
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -633,7 +691,7 @@ export default function AdminPage() {
                         const { url, publicId } = await uploadMediaFile(f);
                         if (url) {
                           setSettings((prev) => ({ ...(prev || {}), productsHeroImageUrl: url, productsHeroImagePublicId: publicId }));
-                          await fetch("/api/settings", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...(settings || {}), productsHeroImageUrl: url, productsHeroImagePublicId: publicId }) });
+                          await fetch("/api/settings", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...(settings || {}), productsHeroImageUrl: url, productsHeroImagePublicId: publicId }), credentials: 'same-origin' });
                         }
                       } catch (err) {
                         console.error("Products hero upload failed", err);
@@ -650,7 +708,7 @@ export default function AdminPage() {
                           onClick={async () => {
                             const next = { ...(settings || {}), productsHeroImageUrl: "", productsHeroImagePublicId: "" } as Settings;
                             setSettings(next);
-                            await fetch("/api/settings", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(next) });
+                            await fetch("/api/settings", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(next), credentials: 'same-origin' });
                           }}
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -668,16 +726,16 @@ export default function AdminPage() {
           )}
         </div>
 
-        {/* Centered Modal for product create/edit */}
-  <div className={`fixed inset-0 z-50 ${showModal ? "" : "pointer-events-none"}`} aria-hidden={!showModal}>
+        {/* Product create/edit modal (full-screen on mobile) */}
+  <div className={`fixed inset-0 z-50 ${showModal ? "" : "pointer-events-none"}`} aria-hidden={!showModal} role="dialog" aria-modal="true">
           {/* backdrop */}
           <div className={`absolute inset-0 bg-black/40 transition-opacity ${showModal ? "opacity-100" : "opacity-0"}`} onClick={() => { setShowModal(false); resetForm(); }} />
-          <div className={`absolute left-1/2 top-1/2 w-[92vw] max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-md border border-black/10 dark:border-white/10 bg-background shadow-xl transition-transform ${showModal ? "scale-100 opacity-100" : "scale-95 opacity-0"}`}>
-            <div className="h-12 flex items-center justify-between px-4 border-b border-black/10 dark:border-white/10">
+          <div className={`absolute md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 w-screen h-[100vh] md:w-[92vw] md:max-w-lg md:h-auto rounded-none md:rounded-md border border-black/10 dark:border-white/10 bg-background shadow-xl transition-transform ${showModal ? "scale-100 opacity-100" : "scale-95 opacity-0"}`}>
+            <div className="h-14 md:h-12 flex items-center justify-between px-4 border-b border-black/10 dark:border-white/10 sticky top-0 bg-background">
               <div className="font-medium">{editingId ? "Edit product" : "New product"}</div>
-              <button className="btn-outline" onClick={() => { setShowModal(false); resetForm(); }}>Close</button>
+              <button className="btn-outline" onClick={() => { setShowModal(false); resetForm(); }} aria-label="Close">Close</button>
             </div>
-            <div className="p-4 max-h-[70vh] overflow-y-auto">
+            <div className="p-4 md:max-h-[70vh] md:overflow-y-auto h-[calc(100vh-3.5rem)] overflow-y-auto">
               <form onSubmit={onSubmit} className="grid gap-3">
               <label className="text-xs text-muted">Title</label>
               <input required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Natural Ruby Necklace" className="rounded-md border px-3 py-2" />
@@ -791,6 +849,17 @@ export default function AdminPage() {
           </div>
         </div>
       </main>
+      {/* Mobile floating action button for quick add */}
+      {active === "products" && authorized ? (
+        <button
+          className="fixed md:hidden bottom-5 right-5 inline-flex items-center gap-2 rounded-full px-4 py-3 shadow-lg bg-black text-white dark:bg-white dark:text-black active:scale-95 transition disabled:opacity-60"
+          onClick={() => { resetForm(); setShowModal(true); }}
+          aria-label="Add product"
+        >
+          <span className="text-lg leading-none">＋</span>
+          <span className="font-medium">Add</span>
+        </button>
+      ) : null}
       </div>
     </div>
   );

@@ -33,10 +33,8 @@ export async function POST(req: Request) {
   const real = doc?.admin_pass as string | undefined;
   const ok = typeof real === "string" && attempt === real;
   const res = NextResponse.json({ ok });
-  // Only set a persistent cookie when the user opted to 'keep' the session.
-  // If keep is false we won't set any cookie so the client-side auth will
-  // be lost on refresh (desired: non-persistent session).
-  if (ok && keep) {
+  // Always set a cookie when ok, but if keep=false make it a session cookie.
+  if (ok) {
     res.headers.set("Set-Cookie", makeCookieHeader(keep));
   }
   return res;

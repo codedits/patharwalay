@@ -3,6 +3,8 @@ import { connectToDatabase } from "@/lib/db";
 import { Product } from "@/models/Product";
 import type { IProduct } from "@/models/Product";
 import cloudinaryImport from "cloudinary";
+import { ensureAdmin } from "@/lib/auth";
+import { sanitizeProductInput } from "@/lib/validation";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -42,9 +44,14 @@ export async function GET(_: Request, { params }: Params) {
 }
 
 export async function PUT(req: Request, { params }: Params) {
+  const guard = await ensureAdmin(req);
+  if (guard) return guard;
   await connectToDatabase();
   const { id } = await params;
-  const body = await req.json();
+  const raw = await req.json().catch(() => null);
+  const parsed = sanitizeProductInput(raw);
+  if (!parsed.ok) return NextResponse.json({ error: parsed.error }, { status: 400 });
+  const body = parsed.value as Record<string, unknown>;
   // fetch previous to detect removed images for cleanup
   const prev = (await Product.findById(id).lean()) as IProduct | null;
   if (body.images && !Array.isArray(body.images)) {
@@ -96,7 +103,9 @@ export async function PUT(req: Request, { params }: Params) {
   return NextResponse.json(updated);
 }
 
-export async function DELETE(_: Request, { params }: Params) {
+export async function DELETE(req: Request, { params }: Params) {
+  const guard = await ensureAdmin(req);
+  if (guard) return guard;
   await connectToDatabase();
   const { id } = await params;
   // Fetch product to get image URLs

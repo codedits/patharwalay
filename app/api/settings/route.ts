@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/db";
 import { SiteSettings } from "@/models/SiteSettings";
 import cloudinaryImport from "cloudinary";
+import { ensureAdmin } from "@/lib/auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -30,8 +31,14 @@ const cloudinary: CloudinaryV2 = (cloudinaryImport as unknown as { v2: Cloudinar
 cloudinary.config({ secure: true });
 
 export async function PUT(req: Request) {
+  const guard = await ensureAdmin(req);
+  if (guard) return guard;
   await connectToDatabase();
-  const body = await req.json();
+  const raw = await req.json().catch(() => null);
+  if (!raw || typeof raw !== "object") {
+    return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
+  }
+  const body = raw as Record<string, unknown>;
   // normalize incoming keys
   if (body && typeof body === "object") {
     if (body.heroHeadLine && !body.heroHeadline) {
@@ -40,6 +47,13 @@ export async function PUT(req: Request) {
     }
     // Accept hero2 and publicId fields as-is.
   }
+  // clamp string lengths to avoid accidental huge docs
+  const clampStr = (v: unknown, n: number) => (typeof v === "string" ? v.slice(0, n) : v);
+  body.heroHeadline = clampStr(body.heroHeadline, 180);
+  body.hero2Headline = clampStr(body.hero2Headline, 180);
+  body.hero2Tagline = clampStr(body.hero2Tagline, 300);
+  body.productsHeroHeadline = clampStr(body.productsHeroHeadline, 180);
+  body.productsHeroTagline = clampStr(body.productsHeroTagline, 300);
   const prev = (await SiteSettings.findOne().lean()) as unknown as { heroImagePublicId?: string; hero2ImagePublicId?: string; productsHeroImagePublicId?: string } | null;
   const prevHero1 = prev?.heroImagePublicId;
   const prevHero2 = prev?.hero2ImagePublicId;
