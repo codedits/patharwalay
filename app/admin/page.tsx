@@ -210,6 +210,13 @@ export default function AdminPage() {
   }, [filtered, sortBy]);
 
   async function uploadMediaFile(file: File) {
+    // Client-side size check: reject files larger than 5 MB immediately
+    const MAX_CLIENT_SIZE = 5 * 1024 * 1024; // 5 MB
+    if (file && file.size > MAX_CLIENT_SIZE) {
+      // Caller code normally catches errors and shows alerts; throw a simple error message
+      throw new Error("Image is larger than 5 MB");
+    }
+
     const fd = new FormData();
     fd.append("file", file);
   const res = await fetch("/api/upload", { method: "POST", body: fd, credentials: 'same-origin' });
