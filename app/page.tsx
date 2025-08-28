@@ -7,6 +7,7 @@ import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
 import About from "@/components/About";
+import Contact from "@/components/Contact";
 import { Product } from "@/models/Product";
 import ProductGridClient from "@/components/ProductGridClient";
 
@@ -72,6 +73,7 @@ export default async function Home() {
   <Hero imageUrl={doc?.hero2ImageUrl} headline={doc?.hero2Headline} tagline={doc?.hero2Tagline} showCta={false} align="center" size="lg" />
   ) : null }
   <About />
+  <Contact />
       
     </div>
   );

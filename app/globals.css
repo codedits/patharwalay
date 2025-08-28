@@ -313,7 +313,7 @@ html.dark .card-media::after {
 
 /* Simple, solid black shadow utility for light-mode cards */
 .light-shadow {
-  box-shadow: -10px 10px 15px rgba(0,0,0,0.8);
+  box-shadow: -15px 15px 15px rgba(0,0,0,0.8);
 }
 
 /* When a surface-card uses the light shadow, remove the thin white border and

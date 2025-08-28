@@ -57,10 +57,9 @@ export default function ProductCard({ product, blurDataURL }: { product: unknown
           {/* Title & price bottom */}
           <div className="absolute inset-x-0 bottom-0 p-3 sm:p-4 text-white">
             <div className="flex items-start justify-between gap-3">
-              <h3 className="lux-heading font-medium tracking-tight text-base sm:text-lg truncate drop-shadow-[0_1px_6px_rgba(0,0,0,0.6)]">{title}</h3>
+<h3 className="lux-heading font-medium tracking-tight text-base sm:text-lg truncate drop-shadow-[0_1px_6px_rgba(0,0,0,0.6)]">{title}</h3>
             </div>
-            <p className="mt-1 text-[13px] font-semibold drop-shadow-[0_1px_6px_rgba(0,0,0,0.7)]">{formatPKR(price)}</p>
-          </div>
+            <p className="mt-1 text-[13px] font-semibold drop-shadow-[0_1px_6px_rgba(0,0,0,0.7)]">{formatPKR(price)}</p>          </div>
         </div>
       </div>
   </motion.a>

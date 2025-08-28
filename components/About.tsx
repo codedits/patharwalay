@@ -1,6 +1,6 @@
 export default function About() {
   return (
-    <section aria-labelledby="about-heading" className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <section id="about" aria-labelledby="about-heading" className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
       <div className="grid gap-6 md:grid-cols-2 items-start">
         <div className="rounded-xl p-5 sm:p-6 bg-background outline-light">
           <h2 id="about-heading" className="lux-heading text-xl sm:text-2xl font-semibold tracking-tight mb-2 heading-underline">About us</h2>
