@@ -313,7 +313,7 @@ html.dark .card-media::after {
 
 /* Simple, solid black shadow utility for light-mode cards */
 .light-shadow {
-  box-shadow: -10px 10px +----------px rgba(0,0,0,0.8);
+  box-shadow: -10px 10px 15px rgba(0,0,0,0.8);
 }
 
 /* When a surface-card uses the light shadow, remove the thin white border and
@@ -321,6 +321,7 @@ html.dark .card-media::after {
 .surface-card.light-shadow {
   border: none;
   background: transparent;
+  position: relative; /* establish stacking context for the pseudo-element */
 }
 
 /* Ensure the inner media follows the card's rounding and hides any image fringing */
@@ -328,6 +329,20 @@ html.dark .card-media::after {
   border-radius: inherit;
   overflow: hidden;
   background: transparent;
+}
+
+/* Robust drop shadow placed behind the card using a pseudo-element. This
+  makes the shadow visible even when ancestors clip overflow. The
+  color and blur match a stronger, pleasing vignette in light mode. */
+.surface-card.light-shadow::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: -1; /* render behind the card */
+  box-shadow: -10px 10px 36px rgba(0,0,0,0.28);
+  transform: translateZ(0); /* promote to own layer in some browsers */
 }
 
 /* In dark mode give a subtle white halo so cards stand out against dark backgrounds */
