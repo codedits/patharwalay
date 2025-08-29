@@ -5,6 +5,7 @@ import ThemeToggle from "./ThemeToggle";
 
 export default function Header() {
   const [open, setOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
@@ -45,26 +46,42 @@ export default function Header() {
 
         {/* Mobile */}
         <div className="md:hidden flex items-center justify-between w-full">
-          <button aria-label="Menu" onClick={() => setOpen((v) => !v)} className="inline-flex items-center justify-center h-9 w-9 rounded-md border border-black/10 dark:border-white/15 hover:bg-black/5 dark:hover:bg-white/5 transition">
+          <button aria-label="Menu" onClick={() => { setOpen((v) => !v); setSearchOpen(false); }} className="inline-flex items-center justify-center h-9 w-9 rounded-md border border-black/10 dark:border-white/15 hover:bg-black/5 dark:hover:bg-white/5 transition">
             <svg aria-hidden viewBox="0 0 24 24" className="h-5 w-5 text-foreground"><path fill="currentColor" d="M4 7h16v2H4zm0 6h16v2H4z"/></svg>
           </button>
           <Link href="/" className="text-lg font-semibold tracking-wide">Patthar Walay</Link>
           <div className="flex items-center gap-2">
+            <button aria-label="Search" onClick={() => { setSearchOpen((s) => !s); setOpen(false); }} className="inline-flex items-center justify-center h-9 w-9 rounded-md border border-black/10 dark:border-white/15 hover:bg-black/5 dark:hover:bg-white/5 transition">
+              <svg aria-hidden viewBox="0 0 24 24" className="h-4 w-4 text-foreground" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="11" cy="11" r="7" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
+            </button>
             <ThemeToggle />
           </div>
         </div>
       </nav>
       {open && (
         <div className="md:hidden px-4 py-3 space-y-3 border-t border-black/10 dark:border-white/10">
-          <form action="/products" method="get">
-            <input name="q" placeholder="Search" className="w-full rounded-md border border-black/10 dark:border-white/15 bg-background px-3 py-2 text-sm text-foreground outline-none" />
-          </form>
           <nav className="flex flex-col gap-2 text-foreground opacity-90">
             <Link href="/" className="nav-link">Home</Link>
             <Link href="/products" className="nav-link">Products</Link>
             <a href="#about" className="nav-link">About</a>
             <a href="#contact" className="nav-link">Contact</a>
           </nav>
+        </div>
+      )}
+
+      {searchOpen && (
+        <div className="md:hidden px-4 py-3 border-t border-black/10 dark:border-white/10">
+          <form action="/products" method="get">
+            <div className="relative">
+              <input autoFocus name="q" placeholder="Search" className="w-full rounded-md border border-black/10 dark:border-white/15 bg-background px-3 py-2 text-sm text-foreground outline-none" />
+              <button type="button" aria-label="Close search" onClick={() => setSearchOpen(false)} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted">
+                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
+              </button>
+            </div>
+          </form>
         </div>
       )}
     </header>

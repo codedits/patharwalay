@@ -15,13 +15,12 @@ function applyTheme(theme: Theme) {
 }
 
 export default function ThemeToggle() {
-  const [theme, setTheme] = useState<Theme>("light");
+  const [theme, setTheme] = useState<Theme>("dark");
 
   useEffect(() => {
     try {
-      const stored = (localStorage.getItem("theme") as Theme | null);
-      const prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
-      const initial: Theme = stored ?? (prefersDark ? "dark" : "light");
+  const stored = (localStorage.getItem("theme") as Theme | null);
+  const initial: Theme = stored ?? 'dark';
       setTheme(initial);
       applyTheme(initial);
     } catch {
