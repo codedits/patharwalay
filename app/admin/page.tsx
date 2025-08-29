@@ -1,5 +1,5 @@
 "use client";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import { formatPKR } from "@/lib/currency";
 import Image from "next/image";
 import { polishImageUrl } from "@/lib/images";
@@ -266,20 +266,37 @@ export default function AdminPage() {
   setPriceInput("");
   }
 
-  function editItem(it: Item) {
+  async function editItem(it: Item) {
+    // Ensure we have the full product payload (list API intentionally omits heavy fields)
+    let product: Item = it;
+    if ((!it.description || it.description === "") && it._id) {
+      try {
+        const res = await fetch(`/api/products/${it._id}`);
+        if (res.ok) {
+          const data = await res.json();
+          // prefer returned data when available
+          if (data && typeof data === "object") {
+            product = data as Item;
+          }
+        }
+      } catch (err) {
+        console.warn("Failed to fetch full product for edit, falling back to list item", err);
+      }
+    }
+
     setForm({
-      _id: it._id,
-      title: it.title,
-      description: it.description,
-      price: it.price,
-      imageUrl: it.imageUrl || (it.images && it.images[0]) || "",
-      images: it.images || (it.imageUrl ? [it.imageUrl] : []),
-      onSale: it.onSale ?? false,
-      inStock: it.inStock ?? true,
+      _id: product._id,
+      title: product.title,
+      description: product.description,
+      price: product.price,
+      imageUrl: product.imageUrl || (product.images && product.images[0]) || "",
+      images: product.images || (product.imageUrl ? [product.imageUrl] : []),
+      onSale: product.onSale ?? false,
+      inStock: product.inStock ?? true,
     });
-  setPriceInput(String(it.price ?? ""));
-    setEditingId(it._id || null);
-  setShowModal(true);
+    setPriceInput(String(product.price ?? ""));
+    setEditingId(product._id || null);
+    setShowModal(true);
   }
 
   async function remove(id?: string) {
@@ -338,6 +355,87 @@ export default function AdminPage() {
     }
   }
 
+  // Image drag-and-drop helpers: reorder by dragging thumbnails (first image is cover)
+  const dragIndexRef = useRef<number | null>(null);
+  const [draggingIdx, setDraggingIdx] = useState<number | null>(null);
+
+  function handleDragStart(e: React.DragEvent<HTMLDivElement>, idx: number) {
+    dragIndexRef.current = idx;
+    setDraggingIdx(idx);
+    try { e.dataTransfer.setData('text/plain', String(idx)); } catch {}
+    e.dataTransfer.effectAllowed = 'move';
+  }
+
+  function handleDragOver(e: React.DragEvent<HTMLDivElement>) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  }
+
+  function handleDrop(e: React.DragEvent<HTMLDivElement>, toIdx: number) {
+    e.preventDefault();
+    const from = dragIndexRef.current ?? Number(e.dataTransfer.getData('text/plain'));
+    if (from === null || from === undefined || isNaN(from)) {
+      setDraggingIdx(null);
+      dragIndexRef.current = null;
+      return;
+    }
+    if (from === toIdx) {
+      setDraggingIdx(null);
+      dragIndexRef.current = null;
+      return;
+    }
+    setForm((prev) => {
+      const imgs = Array.isArray(prev.images) ? [...prev.images] : [];
+      if (from < 0 || from >= imgs.length) return prev;
+      const [moved] = imgs.splice(from, 1);
+      imgs.splice(toIdx, 0, moved);
+      dragIndexRef.current = null;
+      setDraggingIdx(null);
+      return { ...prev, images: imgs, imageUrl: imgs[0] || prev.imageUrl };
+    });
+  }
+
+  function handleDragEnd() {
+    dragIndexRef.current = null;
+    setDraggingIdx(null);
+  }
+
+  // Touch support for mobile: reorder while dragging finger
+  function handleTouchStart(e: React.TouchEvent<HTMLDivElement>, idx: number) {
+    dragIndexRef.current = idx;
+    setDraggingIdx(idx);
+  }
+
+  function handleTouchMove(e: React.TouchEvent<HTMLDivElement>) {
+    const from = dragIndexRef.current;
+    if (from === null || from === undefined) return;
+    const t = e.touches[0];
+    if (!t) return;
+    const el = document.elementFromPoint(t.clientX, t.clientY) as HTMLElement | null;
+    if (!el) return;
+    const tile = el.closest('[data-thumb-idx]') as HTMLElement | null;
+    if (!tile) return;
+    const toIdx = Number(tile.dataset.thumbIdx);
+    if (isNaN(toIdx) || toIdx === from) return;
+    // perform immediate reorder as user drags
+    setForm((prev) => {
+      const imgs = Array.isArray(prev.images) ? [...prev.images] : [];
+      if (from < 0 || from >= imgs.length) return prev;
+      const [moved] = imgs.splice(from, 1);
+      imgs.splice(toIdx, 0, moved);
+      dragIndexRef.current = toIdx;
+      setDraggingIdx(toIdx);
+      return { ...prev, images: imgs, imageUrl: imgs[0] || prev.imageUrl };
+    });
+    // prevent the page from scrolling while dragging
+    try { e.preventDefault(); } catch {}
+  }
+
+  function handleTouchEnd() {
+    dragIndexRef.current = null;
+    setDraggingIdx(null);
+  }
+
   return (
     <div className="relative">
       {isProtected && !authorized ? (
@@ -381,7 +479,7 @@ export default function AdminPage() {
       </aside>
 
     {/* Main */}
-  <main className="flex-1 flex flex-col">
+  <main className="flex-1 flex flex-col min-w-0">
         {/* Header */}
   <header className="sticky top-0 z-10 border-b border-black/10 dark:border-white/10 bg-white/70 dark:bg-black/30 backdrop-blur supports-[backdrop-filter]:bg-white/40 flex flex-col md:flex-row items-center px-4 gap-3 py-2 md:py-0">
           <div className="md:hidden text-base font-semibold">Admin</div>
@@ -456,19 +554,31 @@ export default function AdminPage() {
               {/* Mobile list view */}
               <div className="md:hidden grid gap-3">
                 {sorted.map((it) => (
-                  <div key={it._id} className="rounded-md border border-black/10 dark:border-white/10 p-3 flex items-center gap-3">
+                  <div key={it._id} className="rounded-md border border-black/10 dark:border-white/10 p-3 grid grid-cols-[80px_1fr] gap-3 items-start">
                     <div className="relative w-20 h-28 bg-black/5 dark:bg-white/10 overflow-hidden rounded">
                       {it.images?.[0] || it.imageUrl ? (
                         <Image src={(it.images?.[0] || it.imageUrl)!} alt={it.title} fill className="object-cover" sizes="80px" />
                       ) : null}
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="font-medium truncate" title={it.title}>{it.title}</div>
-                      <div className="text-xs text-muted mt-0.5">{formatPKR(it.price)} · <span className={it.inStock ? "text-emerald-600" : "text-rose-600"}>{it.inStock ? "In stock" : "Out of stock"}</span>{it.onSale ? " · SALE" : ""}</div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <button onClick={() => editItem(it)} className="btn-primary text-xs">Edit</button>
-                      <button onClick={() => remove(it._id)} className="btn-outline text-xs">Del</button>
+                    <div className="min-w-0 flex flex-col">
+                      <div className="flex items-center gap-3">
+                        <div className="font-medium truncate" title={it.title}>{it.title}</div>
+                        <div className="ml-auto hidden sm:block text-xs text-muted">{formatPKR(it.price)} · <span className={it.inStock ? "text-emerald-600" : "text-rose-600"}>{it.inStock ? "In stock" : "Out of stock"}</span>{it.onSale ? " · SALE" : ""}</div>
+                      </div>
+                      <div className="text-xs text-muted mt-1 sm:hidden">{formatPKR(it.price)} · <span className={it.inStock ? "text-emerald-600" : "text-rose-600"}>{it.inStock ? "In stock" : "Out of stock"}</span>{it.onSale ? " · SALE" : ""}</div>
+                      <div className="mt-3 flex items-center gap-2">
+                        <button onClick={() => editItem(it)} className="inline-flex items-center justify-center p-2 rounded-md text-sky-600 hover:bg-sky-50 dark:hover:bg-sky-600/10" aria-label={`Edit ${it.title}`} title="Edit">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                            <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25z" />
+                            <path d="M20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
+                          </svg>
+                        </button>
+                        <button onClick={() => remove(it._id)} className="inline-flex items-center justify-center p-2 rounded-md text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10" aria-label={`Delete ${it.title}`} title="Delete">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true">
+                            <path d="M9 3a1 1 0 00-.894.553L7 5H4a1 1 0 100 2h16a1 1 0 100-2h-3l-1.106-1.447A1 1 0 0015 3H9zM7 8v11a2 2 0 002 2h6a2 2 0 002-2V8H7z" />
+                          </svg>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -509,8 +619,17 @@ export default function AdminPage() {
                         </td>
                         <td className="px-3 py-2 text-muted">{it.images?.length || 0}</td>
                         <td className="px-3 py-2 text-right">
-                          <button onClick={() => editItem(it)} className="btn-primary text-xs">Edit</button>
-                          <button onClick={() => remove(it._id)} className="btn-outline text-xs ml-2">Delete</button>
+                          <button onClick={() => editItem(it)} className="inline-flex items-center justify-center p-2 rounded-md text-sky-600 hover:bg-sky-50 dark:hover:bg-sky-600/10" aria-label={`Edit ${it.title}`} title="Edit">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                              <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25z" />
+                              <path d="M20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
+                            </svg>
+                          </button>
+                          <button onClick={() => remove(it._id)} className="ml-2 inline-flex items-center justify-center p-2 rounded-md text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10" aria-label={`Delete ${it.title}`} title="Delete">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true">
+                              <path d="M9 3a1 1 0 00-.894.553L7 5H4a1 1 0 100 2h16a1 1 0 100-2h-3l-1.106-1.447A1 1 0 0015 3H9zM7 8v11a2 2 0 002 2h6a2 2 0 002-2V8H7z" />
+                            </svg>
+                          </button>
                         </td>
                       </tr>
                     ))}
@@ -829,18 +948,35 @@ export default function AdminPage() {
                 {form.images && form.images.length ? (
                   <div className="mt-2 grid grid-cols-3 sm:grid-cols-4 gap-2">
                     {form.images.filter(Boolean).map((url, idx) => (
-                      <div key={url} className="rounded overflow-hidden border border-black/10 dark:border-white/10 relative">
+                      <div
+                        key={url}
+                        data-thumb-idx={idx}
+                        draggable
+                        onDragStart={(e) => handleDragStart(e, idx)}
+                        onDragOver={handleDragOver}
+                        onDrop={(e) => handleDrop(e, idx)}
+                        onDragEnd={handleDragEnd}
+                        onTouchStart={(e) => handleTouchStart(e, idx)}
+                        onTouchMove={handleTouchMove}
+                        onTouchEnd={handleTouchEnd}
+                        className={`rounded overflow-hidden border border-black/10 dark:border-white/10 relative ${draggingIdx === idx ? 'opacity-60 ring-2 ring-accent/40' : ''} cursor-move`}
+                      >
                         <div className="relative w-full h-24">
                           <Image src={url} alt={`img-${idx}`} fill className="object-cover" sizes="100px" />
                         </div>
-                        <button
-                          type="button"
-                          aria-label="Remove image"
-                          onClick={() => setForm((prev) => ({ ...prev, images: (prev.images || []).filter((u) => u !== url) }))}
-                          className="absolute top-2 right-2 z-30 bg-red-600 text-white hover:bg-red-700 rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold shadow-md border border-white/10"
-                        >
-                          ×
-                        </button>
+                        <div className="absolute top-2 right-2 z-30 flex flex-col gap-2">
+                          <button
+                            type="button"
+                            aria-label="Remove image"
+                            onClick={() => setForm((prev) => ({ ...prev, images: (prev.images || []).filter((u) => u !== url), imageUrl: (prev.images || [])[0] }))}
+                            className="bg-red-600 text-white hover:bg-red-700 rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold shadow-md border border-white/10"
+                          >
+                            ×
+                          </button>
+                          {idx === 0 ? (
+                            <div className="inline-flex items-center justify-center rounded-md bg-emerald-50 text-emerald-700 px-2 py-0.5 text-[11px]">Cover</div>
+                          ) : null}
+                        </div>
                       </div>
                     ))}
                   </div>
