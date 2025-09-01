@@ -20,14 +20,20 @@ function getCloudinaryPublicIdFromUrl(url: string): string | null {
     const marker = "/upload/";
     const idx = u.pathname.indexOf(marker);
     if (idx === -1) return null;
-    let rest = u.pathname.slice(idx + marker.length); // e.g. v1234/products/abc.jpg
-    // remove version segment if present
-    rest = rest.replace(/^v\d+\//, "");
-    // strip extension from last segment
-    const dot = rest.lastIndexOf(".");
-    if (dot !== -1) rest = rest.slice(0, dot);
-    // decode URI components for folder names
-    return decodeURIComponent(rest);
+  // We need to strip any transformation segments that can appear between
+  // /upload/ and the version/public id. Examples:
+  // - /upload/v1234/products/abc.jpg
+  // - /upload/c_fill,w_800/products/abc.jpg
+  // - /upload/c_fill,g_auto/v1234/products/abc.jpg
+  // Use a regex to capture the final public id path (including folders) and drop
+  // any transformation or version segments.
+  const m = u.pathname.match(/\/upload\/(?:[^\/]+\/)*?(?:v\d+\/)?(.+)$/);
+  if (!m || !m[1]) return null;
+  let publicPath = m[1];
+  // strip extension from last segment
+  const dot = publicPath.lastIndexOf(".");
+  if (dot !== -1) publicPath = publicPath.slice(0, dot);
+  return decodeURIComponent(publicPath);
   } catch {
     return null;
   }
@@ -94,7 +100,8 @@ export async function PUT(req: Request, { params }: Params) {
         .filter((x): x is string => typeof x === "string" && x.length > 0)
       ));
       if (ids.length) {
-        await Promise.all(ids.map((pid) => cloudinary.uploader.destroy(pid).catch((e: unknown) => console.warn("Cloudinary delete (update) failed:", pid, e))));
+        console.info("Cloudinary: deleting (update) public ids:", ids);
+        await Promise.all(ids.map((pid) => cloudinary.uploader.destroy(pid, { resource_type: "image", invalidate: true }).catch((e: unknown) => console.warn("Cloudinary delete (update) failed:", pid, e))));
       }
     }
   } catch (e) {
@@ -121,7 +128,8 @@ export async function DELETE(req: Request, { params }: Params) {
         .filter((x): x is string => typeof x === "string" && x.length > 0)
       ));
       if (ids.length) {
-        await Promise.all(ids.map((pid) => cloudinary.uploader.destroy(pid).catch((e: unknown) => console.warn("Cloudinary delete (delete) failed:", pid, e))));
+        console.info("Cloudinary: deleting (delete) public ids:", ids);
+        await Promise.all(ids.map((pid) => cloudinary.uploader.destroy(pid, { resource_type: "image", invalidate: true }).catch((e: unknown) => console.warn("Cloudinary delete (delete) failed:", pid, e))));
       }
     } catch (e) {
       console.warn("Cleanup on delete failed:", e);

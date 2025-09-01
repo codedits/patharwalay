@@ -38,6 +38,7 @@ export default function Header() {
             <Link href="/products" className="nav-link">Products</Link>
             <Link href="#about" className="nav-link">About</Link>
             <Link href="#contact" className="nav-link">Contact</Link>
+            <Link href="/admin" className="nav-link">Admin</Link>
           </nav>
           <div className="flex items-center gap-2">
             <ThemeToggle />
@@ -68,6 +69,7 @@ export default function Header() {
             <Link href="/products" className="nav-link">Products</Link>
             <a href="#about" className="nav-link">About</a>
             <a href="#contact" className="nav-link">Contact</a>
+            <Link href="/admin" className="nav-link">Admin</Link>
           </nav>
         </div>
       )}
