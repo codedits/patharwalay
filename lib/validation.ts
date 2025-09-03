@@ -10,6 +10,7 @@ export type SanitizedProduct = {
   images?: string[];
   onSale?: boolean;
   inStock?: boolean;
+  featured?: boolean;
   slug?: string;
 };
 
@@ -31,6 +32,7 @@ export function sanitizeProductInput(body: unknown): { ok: true; value: Sanitize
 
   const onSale = !!src.onSale;
   const inStock = src.inStock == null ? true : !!src.inStock;
+  const featured = !!src.featured;
 
   let imageUrl = typeof src.imageUrl === "string" ? src.imageUrl.trim() : undefined;
 
@@ -47,5 +49,5 @@ export function sanitizeProductInput(body: unknown): { ok: true; value: Sanitize
     slug = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
   }
 
-  return { ok: true, value: { title, description, price, imageUrl, images, onSale, inStock, slug } };
+  return { ok: true, value: { title, description, price, imageUrl, images, onSale, inStock, featured, slug } };
 }

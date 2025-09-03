@@ -22,7 +22,7 @@ export async function GET(req: Request) {
     return NextResponse.json(cached.data);
   }
 
-  const projection = { title: 1, price: 1, images: 1, imageUrl: 1, slug: 1, onSale: 1, inStock: 1, createdAt: 1 } as const;
+  const projection = { title: 1, price: 1, images: 1, imageUrl: 1, slug: 1, onSale: 1, inStock: 1, featured: 1, createdAt: 1 } as const;
   const filter = q
     ? { $or: [ { title: { $regex: escapeRegex(q), $options: "i" } }, { description: { $regex: escapeRegex(q), $options: "i" } } ] }
     : {};
@@ -59,7 +59,7 @@ export async function POST(req: Request) {
   try {
     const created = await Product.create(body);
     return NextResponse.json(created, { status: 201 });
-  } catch (e) {
+  } catch {
     return NextResponse.json({ error: "Failed to create product" }, { status: 500 });
   }
 }

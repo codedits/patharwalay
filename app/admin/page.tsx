@@ -15,6 +15,7 @@ type Item = {
   onSale?: boolean;
   inStock?: boolean;
   createdAt?: string | number | Date;
+  featured?: boolean;
 };
 
 type ProductForm = {
@@ -26,6 +27,7 @@ type ProductForm = {
   images?: string[];
   onSale?: boolean;
   inStock?: boolean;
+  featured?: boolean;
 };
 
 type Settings = {
@@ -57,7 +59,7 @@ export default function AdminPage() {
   const [authError, setAuthError] = useState<string | null>(null);
   const [keepLogged, setKeepLogged] = useState<boolean>(false);
   const [settingsSaving, setSettingsSaving] = useState(false);
-  const [form, setForm] = useState<ProductForm>({ title: "", description: "", price: 0, imageUrl: "", images: [], inStock: true, onSale: false });
+  const [form, setForm] = useState<ProductForm>({ title: "", description: "", price: 0, imageUrl: "", images: [], inStock: true, onSale: false, featured: false });
   const [sortBy, setSortBy] = useState<"title-asc" | "title-desc" | "newest" | "oldest" | "price-asc" | "price-desc">("title-asc");
   const [isUploading, setIsUploading] = useState(false);
   const [uploadingTotal, setUploadingTotal] = useState(0);
@@ -230,7 +232,7 @@ export default function AdminPage() {
       // Try to parse JSON first from a clone so the original response stays
       // unread for other uses.
       data = await res.clone().json();
-    } catch (_parseErr) {
+  } catch {
       try {
         const text = await res.clone().text();
         data = { error: text || `Upload failed with status ${res.status}` };
@@ -261,7 +263,7 @@ export default function AdminPage() {
   }
 
   function resetForm() {
-    setForm({ title: "", description: "", price: 0, imageUrl: "", images: [], inStock: true, onSale: false });
+  setForm({ title: "", description: "", price: 0, imageUrl: "", images: [], inStock: true, onSale: false, featured: false });
     setEditingId(null);
   setPriceInput("");
   }
@@ -291,8 +293,9 @@ export default function AdminPage() {
       price: product.price,
       imageUrl: product.imageUrl || (product.images && product.images[0]) || "",
       images: product.images || (product.imageUrl ? [product.imageUrl] : []),
-      onSale: product.onSale ?? false,
-      inStock: product.inStock ?? true,
+  onSale: product.onSale ?? false,
+  inStock: product.inStock ?? true,
+  featured: ((product as Item).featured) ?? false,
     });
     setPriceInput(String(product.price ?? ""));
     setEditingId(product._id || null);
@@ -563,6 +566,7 @@ export default function AdminPage() {
                     <div className="min-w-0 flex flex-col">
                       <div className="flex items-center gap-3">
                         <div className="font-medium truncate" title={it.title}>{it.title}</div>
+                        {it.featured ? <div className="ml-2 text-[11px] px-2 py-0.5 rounded bg-amber-100 text-amber-800">Featured</div> : null}
                         <div className="ml-auto hidden sm:block text-xs text-muted">{formatPKR(it.price)} · <span className={it.inStock ? "text-emerald-600" : "text-rose-600"}>{it.inStock ? "In stock" : "Out of stock"}</span>{it.onSale ? " · SALE" : ""}</div>
                       </div>
                       <div className="text-xs text-muted mt-1 sm:hidden">{formatPKR(it.price)} · <span className={it.inStock ? "text-emerald-600" : "text-rose-600"}>{it.inStock ? "In stock" : "Out of stock"}</span>{it.onSale ? " · SALE" : ""}</div>
@@ -610,6 +614,7 @@ export default function AdminPage() {
                               ) : null}
                             </div>
                             <div className="font-medium truncate max-w-[280px]" title={it.title}>{it.title}</div>
+                            {it.featured ? <div className="ml-2 text-[11px] px-2 py-0.5 rounded bg-amber-100 text-amber-800">Featured</div> : null}
                           </div>
                         </td>
                         <td className="px-3 py-2">{formatPKR(it.price)}</td>
@@ -889,6 +894,7 @@ export default function AdminPage() {
                 <div className="flex items-end gap-3">
                   <label className="inline-flex items-center gap-2 text-xs"><input type="checkbox" checked={!!form.inStock} onChange={(e) => setForm({ ...form, inStock: e.target.checked })} /> In stock</label>
                   <label className="inline-flex items-center gap-2 text-xs"><input type="checkbox" checked={!!form.onSale} onChange={(e) => setForm({ ...form, onSale: e.target.checked })} /> On sale</label>
+                  <label className="inline-flex items-center gap-2 text-xs"><input type="checkbox" checked={!!form.featured} onChange={(e) => setForm({ ...form, featured: e.target.checked })} /> Featured</label>
                 </div>
               </div>
 

@@ -10,6 +10,7 @@ export interface IProduct {
   slug?: string;
   onSale?: boolean;
   inStock?: boolean;
+  featured?: boolean;
 }
 
 const ProductSchema = new Schema<IProduct>(
@@ -23,6 +24,7 @@ const ProductSchema = new Schema<IProduct>(
   slug: { type: String, required: true },
     onSale: { type: Boolean, default: false },
     inStock: { type: Boolean, default: true },
+  featured: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

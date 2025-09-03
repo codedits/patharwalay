@@ -33,8 +33,8 @@ export default async function Home() {
   try {
     if (process.env.MONGODB_URI) {
   await connectToDatabase();
-  const projection = { title: 1, price: 1, images: 1, imageUrl: 1, slug: 1, onSale: 1, inStock: 1 };
-  const raw = await Product.find({}, projection).sort({ createdAt: -1 }).limit(8).lean();
+  const projection = { title: 1, price: 1, images: 1, imageUrl: 1, slug: 1, onSale: 1, inStock: 1, featured: 1 };
+  const raw = await Product.find({ featured: true }, projection).sort({ createdAt: -1 }).limit(8).lean();
       // convert ObjectId to string to ensure serializable plain object
       products = raw.map((p) => {
         const r = p as unknown as Record<string, unknown>;
@@ -66,6 +66,7 @@ export default async function Home() {
             <div className="text-muted">No products yet.</div>
           )}
         </div>
+        
   </section>
   {/* Second hero below Featured (individual content) */}
   { (doc?.hero2ImageUrl || doc?.hero2Headline || doc?.hero2Tagline) ? (
@@ -78,7 +79,7 @@ export default async function Home() {
 }
 
 export const metadata: Metadata = {
-  title: "Timeless Gems & Fine Jewelry",
+  title: "Patthar Walay",
   description: "Ethically sourced gemstones and handcrafted jewelry. Discover rings, pendants, and more.",
   alternates: { canonical: "/" },
 };

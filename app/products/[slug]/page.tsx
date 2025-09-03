@@ -82,15 +82,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const canonical = `${site}/products/${slug}`;
   const image = (doc?.images?.[0] || doc?.imageUrl) as string | undefined;
   const ogImages = image ? [{ url: image, width: 1200, height: 630 }] : undefined;
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "Product",
-    name: doc?.title || "Product",
-    description,
-    image: image ? [image] : [],
-    offers: { "@type": "Offer", price: doc?.price ?? 0, priceCurrency: "PKR", availability: doc?.inStock ? "https://schema.org/InStock" : "https://schema.org/OutOfStock" },
-    url: canonical,
-  };
   return {
     title,
     description,
