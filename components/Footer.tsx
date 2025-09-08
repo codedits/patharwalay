@@ -38,8 +38,8 @@ export default function Footer() {
             <div className={`${openContact ? 'block' : 'hidden'} md:block mt-2 text-sm text-muted`}>
               <ul className="space-y-1">
                 <li><a href="mailto:hello@pattharwalay.com" className="hover:underline">hello@pattharwalay.com</a></li>
-                <li><a href="tel:+923001234567" className="hover:underline">+92 300 1234567</a></li>
-                <li>Karachi, Pakistan</li>
+                <li><a href="tel:+923440701990" className="hover:underline">+92 344 0701990</a></li>
+                <li>Lahore, Pakistan</li>
               </ul>
               <div className="flex items-center gap-3 mt-3">
                 <a aria-label="Instagram" href="https://www.instagram.com/pattharwalay" className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-black/10 dark:border-white/10 hover:bg-white/5 transition">
