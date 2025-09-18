@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { IProduct } from "@/models/Product";
 import { formatPKR } from "@/lib/currency";
-import { motion } from "framer-motion";
+// framer-motion removed for performance; using CSS transitions instead
 
 export default function ProductDetailClient({ product, initialBlurDataURL }: { product?: IProduct | null; initialBlurDataURL?: string }) {
   const title = product?.title || (product?.slug || "").replace(/-/g, " ");
@@ -141,9 +141,9 @@ export default function ProductDetailClient({ product, initialBlurDataURL }: { p
           <li className="capitalize text-foreground">{title}</li>
         </ol>
       </nav>
-      <motion.div className="grid grid-cols-1 md:grid-cols-2 gap-8" initial="hidden" animate="show" variants={{ hidden: { }, show: { transition: { staggerChildren: 0.06 } } }}>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div>
-          <motion.div className="relative overflow-hidden surface-card" variants={{ hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0, transition: { duration: 0.45, ease: "easeOut" } } }}>
+          <div className="relative overflow-hidden surface-card">
             {images.length ? (
               // make carousel taller (portrait 2:3) so product images are more prominent
               <div className="relative" style={{ paddingTop: "150%" }}>
@@ -163,22 +163,20 @@ export default function ProductDetailClient({ product, initialBlurDataURL }: { p
             ) : (
               <div className="relative aspect-[2/3] overflow-hidden surface-card flex items-center justify-center text-muted">No image</div>
             )}
-          </motion.div>
+          </div>
             {images.length > 1 ? (
-            <motion.div className="flex gap-2 mt-3" variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0, transition: { duration: 0.35 } } }}>
+            <div className="flex gap-2 mt-3">
               {images.map((img, i) => (
         <button key={img} onClick={() => setIndex(i)} className={`rounded overflow-hidden border ${i === index ? "ring-2 ring-black/20 dark:ring-white/30" : "border-black/10 dark:border-white/10"}`}>
                   <div style={{ width: 80, height: 120, position: "relative" }}>
-          <motion.div whileHover={{ scale: 1.06 }} whileTap={{ scale: 0.98 }}>
-            <Image src={polishImageUrl(img, ["c_fill", "g_auto", "w_160", "h_240"]) } alt={`thumb-${i}`} fill sizes="80px" className="object-cover" />
-          </motion.div>
+            <Image src={polishImageUrl(img, ["c_fill", "g_auto", "w_160", "h_240"]) } alt={`thumb-${i}`} fill sizes="80px" className="object-cover transition-transform duration-200 ease-out hover:scale-105 active:scale-95" />
                   </div>
                 </button>
               ))}
-            </motion.div>
+            </div>
           ) : null}
         </div>
-        <motion.div className="space-y-4" variants={{ hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0, transition: { duration: 0.45, ease: "easeOut" } } }}>
+        <div className="space-y-4">
                 <h1 className="lux-heading text-3xl font-semibold tracking-tight capitalize">{title}</h1>
                 {/* Description will be shown in the details block below */}
                 <div className="text-xl font-semibold">{formatPKR(price)}</div>
@@ -187,16 +185,13 @@ export default function ProductDetailClient({ product, initialBlurDataURL }: { p
             <span className="ml-2 text-xs text-muted">4.8 (128)</span>
           </div>
           <div className="pt-2">
-            <motion.button
-              className="btn-red red-glow"
-              whileHover={{ scale: 1.03, boxShadow: "0 8px 24px rgba(0,0,0,0.12)" }}
-              whileTap={{ scale: 0.98 }}
-              transition={{ type: "spring", stiffness: 300, damping: 18 }}
+            <button
+              className="btn-red red-glow transition-transform duration-150 ease-out hover:scale-[1.03] active:scale-95 hover:shadow-lg"
               onClick={handleBuyNow}
               aria-label="Buy now via WhatsApp"
             >
               Buy now
-            </motion.button>
+            </button>
           </div>
           <div className="pt-6 text-sm leading-6">
             {product?.description ? (
@@ -208,8 +203,8 @@ export default function ProductDetailClient({ product, initialBlurDataURL }: { p
               </p>
             )}
           </div>
-        </motion.div>
-      </motion.div>
+        </div>
+      </div>
     </div>
   );
 }

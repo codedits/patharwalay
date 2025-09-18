@@ -1,4 +1,4 @@
-import ProductGridClient from "@/components/ProductGridClient";
+import ProductGrid from "@/components/ProductGrid";
 import { connectToDatabase } from "@/lib/db";
 import { Product } from "@/models/Product";
 import { SiteSettings } from "@/models/SiteSettings";
@@ -55,8 +55,7 @@ export default async function ProductsPage({ searchParams }: { searchParams?: Pr
       </div>
 
   <div className="w-full">
-      {/* client-side grid will retry fetching if SSR returned no products */}
-      <ProductGridClient initialProducts={products} endpoint="/api/products" />
+    <ProductGrid products={products as unknown[]} />
   </div>
     </div>
   );
