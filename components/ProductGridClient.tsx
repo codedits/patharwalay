@@ -3,6 +3,11 @@ import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import ProductCard from "@/components/ProductCard";
 
+// framer-motion's types may be incompatible with the project's React types
+// in some versions; create a small typed wrapper so standard HTML props
+// like `className` are accepted on the top-level motion container.
+const MotionDiv = motion.div as unknown as React.ComponentType<React.HTMLAttributes<HTMLDivElement> & Record<string, unknown>>;
+
 type Props = {
   initialProducts?: unknown[];
   endpoint?: string;
@@ -66,7 +71,7 @@ export default function ProductGridClient({ initialProducts = [], endpoint = "/a
   const item = { hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0, transition: { duration: 0.35 } } };
 
   return (
-    <motion.div initial="hidden" animate="show" variants={container} className="grid grid-cols-2 md:grid-cols-4 gap-5 sm:gap-6 lg:gap-8">
+    <MotionDiv initial="hidden" animate="show" variants={container} className="grid grid-cols-2 md:grid-cols-4 gap-5 sm:gap-6 lg:gap-8">
       {products.map((p) => {
         const key = (() => {
           const o = p as Record<string, unknown>;
@@ -83,6 +88,6 @@ export default function ProductGridClient({ initialProducts = [], endpoint = "/a
           </motion.div>
         );
       })}
-    </motion.div>
+    </MotionDiv>
   );
 }
