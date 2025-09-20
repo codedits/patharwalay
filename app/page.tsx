@@ -1,4 +1,3 @@
-import Link from "next/link";
 import Hero from "@/components/Hero";
 import { ISiteSettings } from "@/models/SiteSettings";
 import { connectToDatabase } from "@/lib/db";
@@ -8,7 +7,7 @@ import type { Metadata } from "next";
 export const dynamic = "force-dynamic";
 // About and Contact sections removed from the main page
 import { Product } from "@/models/Product";
-import ProductGridClient from "@/components/ProductGridClient";
+import Showcase from "@/components/Showcase";
 
 export default async function Home() {
   let doc: ISiteSettings | null = null;
@@ -52,22 +51,10 @@ export default async function Home() {
 
   return (
   <div className="space-y-12">
-      <Hero imageUrl={doc?.heroImageUrl} headline={doc?.heroHeadline} />
+    <Hero imageUrl={doc?.heroImageUrl} headline={doc?.heroHeadline} height="70vh" />
 
-  <section id="collections" className="space-y-6">
-    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 flex items-end justify-between gap-4">
-          <h2 className="lux-heading text-xl sm:text-2xl font-semibold tracking-tight heading-underline">Featured Pieces</h2>
-          <Link href="/products" className="text-sm hover:opacity-80 hidden sm:inline">View all</Link>
-        </div>
-  <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 outline-light">
-          {products.length ? (
-            <ProductGridClient initialProducts={products} />
-          ) : (
-            <div className="text-muted">No products yet.</div>
-          )}
-        </div>
-        
-  </section>
+  {/* Premium showcase sections */}
+  <Showcase />
   {/* Second hero below Featured (individual content) */}
   { (doc?.hero2ImageUrl || doc?.hero2Headline || doc?.hero2Tagline) ? (
   <Hero imageUrl={doc?.hero2ImageUrl} headline={doc?.hero2Headline} tagline={doc?.hero2Tagline} showCta={false} align="center" size="lg" />

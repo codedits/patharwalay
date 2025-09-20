@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Cormorant_Garamond, Poppins } from "next/font/google";
 import Header from "@/components/Header";
+import Breadcrumbs from "@/components/Breadcrumbs";
 import Footer from "@/components/Footer";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
@@ -8,23 +9,27 @@ import "./globals.css";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
+  display: "swap",
 });
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+  display: "swap",
 });
 
 const cormorant = Cormorant_Garamond({
   variable: "--font-cormorant",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
+  display: "swap",
 });
 
 const poppins = Poppins({
   variable: "--font-poppins",
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700"],
+  display: "swap",
 });
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://patharwalay.vercel.app";
 export const metadata: Metadata = {
@@ -137,8 +142,9 @@ export default function RootLayout({
             })();
           `}}
         />
-        <div className="min-h-dvh grid grid-rows-[auto_1fr_auto]">
+        <div className="min-h-dvh grid grid-rows-[auto_auto_1fr_auto]">
           <Header />
+          <Breadcrumbs />
           <main id="content" className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 pt-0 pb-8 outline-light">{children}</main>
           <Footer />
           <Analytics />

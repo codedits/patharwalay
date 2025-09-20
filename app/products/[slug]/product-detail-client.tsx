@@ -1,7 +1,6 @@
 "use client";
 import Image from "next/image";
 import { polishImageUrl } from "@/lib/images";
-import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { IProduct } from "@/models/Product";
 import { formatPKR } from "@/lib/currency";
@@ -132,15 +131,6 @@ export default function ProductDetailClient({ product, initialBlurDataURL }: { p
   }
   return (
     <div className="mt-4 sm:mt-6 space-y-6">
-      <nav className="text-sm text-muted" aria-label="Breadcrumb">
-        <ol className="flex items-center gap-1">
-          <li><Link href="/" className="hover:opacity-80">Home</Link></li>
-          <li aria-hidden className="px-1">/</li>
-          <li><Link href="/products" className="hover:opacity-80">Products</Link></li>
-          <li aria-hidden className="px-1">/</li>
-          <li className="capitalize text-foreground">{title}</li>
-        </ol>
-      </nav>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div>
           <div className="relative overflow-hidden surface-card">

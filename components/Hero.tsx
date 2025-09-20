@@ -1,12 +1,15 @@
 import Image from "next/image";
 import { polishImageUrl, shimmerDataURL } from "@/lib/images";
+import { createBlurDataURL, imageSizes, imageProps } from "@/lib/image-utils";
 import Link from "next/link";
 
-export default function Hero({ imageUrl, headline, tagline, showCta = true, align = "left", size = "default", height = "normal" }: { imageUrl?: string; headline?: string; tagline?: string; showCta?: boolean; align?: "left" | "center"; size?: "default" | "lg"; height?: "short" | "normal" | "tall" }) {
+export default function Hero({ imageUrl, headline, tagline, showCta = true, align = "left", size = "default", height = "normal" }: { imageUrl?: string; headline?: string; tagline?: string; showCta?: boolean; align?: "left" | "center"; size?: "default" | "lg"; height?: "short" | "normal" | "tall" | "70vh" }) {
   const heightClass = height === "short"
     ? "h-[32vh] sm:h-[40vh] md:h-[44vh]"
     : height === "tall"
     ? "h-[64vh] sm:h-[72vh] md:h-[78vh]"
+    : height === "70vh"
+    ? "h-[70vh]"
     : "h-[48vh] sm:h-[56vh] md:h-[64vh]";
   return (
     <section className="relative overflow-hidden full-bleed border-b border-black/10 dark:border-white/10">
@@ -17,10 +20,9 @@ export default function Hero({ imageUrl, headline, tagline, showCta = true, alig
           alt="Gemstone banner"
           width={1920}
           height={960}
-          priority
-          placeholder="blur"
-          blurDataURL={shimmerDataURL(60, 30)}
-          sizes="100vw"
+          {...imageProps.critical}
+          blurDataURL={createBlurDataURL(40, 20)}
+          sizes={imageSizes.fullBleed}
           className={`${heightClass} w-full object-cover`}
         />
       ) : (
