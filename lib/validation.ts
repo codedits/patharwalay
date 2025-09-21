@@ -8,6 +8,7 @@ export type SanitizedProduct = {
   price: number;
   imageUrl?: string;
   images?: string[];
+  category?: string;
   onSale?: boolean;
   inStock?: boolean;
   featured?: boolean;
@@ -34,6 +35,17 @@ export function sanitizeProductInput(body: unknown): { ok: true; value: Sanitize
   const inStock = src.inStock == null ? true : !!src.inStock;
   const featured = !!src.featured;
 
+  const category = (() => {
+    if (typeof src.category !== "string") return undefined;
+    const c = src.category.trim().toLowerCase();
+    if (!c) return "";
+    if (["gem", "gems", "gemstone", "gemstones"].includes(c)) return "gemstone";
+    if (["ring", "rings"].includes(c)) return "ring";
+    if (["bracelet", "bracelets", "bangle", "bangles"].includes(c)) return "bracelet";
+    if (["uncategorized", "none", "empty", "null"].includes(c)) return "";
+    return c; // allow custom categories as-is
+  })();
+
   let imageUrl = typeof src.imageUrl === "string" ? src.imageUrl.trim() : undefined;
 
   let images: string[] | undefined = undefined;
@@ -49,5 +61,5 @@ export function sanitizeProductInput(body: unknown): { ok: true; value: Sanitize
     slug = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
   }
 
-  return { ok: true, value: { title, description, price, imageUrl, images, onSale, inStock, featured, slug } };
+  return { ok: true, value: { title, description, price, imageUrl, images, category, onSale, inStock, featured, slug } };
 }

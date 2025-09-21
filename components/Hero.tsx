@@ -33,11 +33,7 @@ export default function Hero({ imageUrl, headline, tagline, showCta = true, alig
         <div className={`mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 pb-8 sm:pb-10 md:pb-12 ${align === "center" ? "flex flex-col items-center text-center" : ""}`}>
           <h1 className={`lux-heading ${size === "lg" ? "text-4xl sm:text-5xl md:text-6xl" : "text-3xl sm:text-4xl md:text-5xl"} font-semibold text-white tracking-tight drop-shadow-[0_2px_10px_rgba(0,0,0,0.6)] max-w-3xl ${align === "center" ? "text-center mx-auto" : ""}`}>{headline || "Timeless Gems, Modern Elegance"}</h1>
           <p className={`mt-4 max-w-xl text-white/90 ${size === "lg" ? "text-base sm:text-lg" : "text-sm sm:text-base"} ${align === "center" ? "text-center mx-auto" : ""}`}>{tagline || "Handpicked gemstones set with precision—crafted to be worn, loved, and passed down."}</p>
-          {showCta && (
-            <div className="mt-6">
-              <Link href="/products" className="btn-glass rounded-md px-6 py-3">Explore products</Link>
-            </div>
-          )}
+         
         </div>
       </div>
     </section>

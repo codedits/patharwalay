@@ -12,6 +12,7 @@ type Item = {
   price: number;
   imageUrl?: string;
   images?: string[];
+  category?: string;
   onSale?: boolean;
   inStock?: boolean;
   createdAt?: string | number | Date;
@@ -25,6 +26,7 @@ type ProductForm = {
   price: number;
   imageUrl?: string;
   images?: string[];
+  category?: string;
   onSale?: boolean;
   inStock?: boolean;
   featured?: boolean;
@@ -59,8 +61,9 @@ export default function AdminPage() {
   const [authError, setAuthError] = useState<string | null>(null);
   const [keepLogged, setKeepLogged] = useState<boolean>(false);
   const [settingsSaving, setSettingsSaving] = useState(false);
-  const [form, setForm] = useState<ProductForm>({ title: "", description: "", price: 0, imageUrl: "", images: [], inStock: true, onSale: false, featured: false });
+  const [form, setForm] = useState<ProductForm>({ title: "", description: "", price: 0, imageUrl: "", images: [], category: "", inStock: true, onSale: false, featured: false });
   const [sortBy, setSortBy] = useState<"title-asc" | "title-desc" | "newest" | "oldest" | "price-asc" | "price-desc">("title-asc");
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [isUploading, setIsUploading] = useState(false);
   const [uploadingTotal, setUploadingTotal] = useState(0);
   const [uploadingDone, setUploadingDone] = useState(0);
@@ -159,9 +162,25 @@ export default function AdminPage() {
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return items;
-    return items.filter((it) => it.title.toLowerCase().includes(q));
-  }, [items, query]);
+    let result = items;
+    
+    // Filter by search query
+    if (q) {
+      result = result.filter((it) => it.title.toLowerCase().includes(q));
+    }
+    
+    // Filter by category
+    if (categoryFilter !== "all") {
+      result = result.filter((it) => {
+        if (categoryFilter === "uncategorized") {
+          return !it.category || it.category.trim() === "";
+        }
+        return it.category && it.category.toLowerCase().includes(categoryFilter.toLowerCase());
+      });
+    }
+    
+    return result;
+  }, [items, query, categoryFilter]);
 
   const sorted = useMemo(() => {
     const list = [...filtered];
@@ -263,9 +282,9 @@ export default function AdminPage() {
   }
 
   function resetForm() {
-  setForm({ title: "", description: "", price: 0, imageUrl: "", images: [], inStock: true, onSale: false, featured: false });
+    setForm({ title: "", description: "", price: 0, imageUrl: "", images: [], category: "", inStock: true, onSale: false, featured: false });
     setEditingId(null);
-  setPriceInput("");
+    setPriceInput("");
   }
 
   async function editItem(it: Item) {
@@ -293,9 +312,10 @@ export default function AdminPage() {
       price: product.price,
       imageUrl: product.imageUrl || (product.images && product.images[0]) || "",
       images: product.images || (product.imageUrl ? [product.imageUrl] : []),
-  onSale: product.onSale ?? false,
-  inStock: product.inStock ?? true,
-  featured: ((product as Item).featured) ?? false,
+      category: product.category || "",
+      onSale: product.onSale ?? false,
+      inStock: product.inStock ?? true,
+      featured: ((product as Item).featured) ?? false,
     });
     setPriceInput(String(product.price ?? ""));
     setEditingId(product._id || null);
@@ -493,6 +513,13 @@ export default function AdminPage() {
       <div className="w-full md:w-auto flex items-center justify-between md:justify-end gap-2">
         {active === "products" ? (
           <div className="flex items-center gap-2 md:gap-3">
+            <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} className="rounded-md border px-2 py-2 text-sm hidden sm:block">
+              <option value="all">All Categories</option>
+              <option value="gemstone">Gemstones</option>
+              <option value="ring">Rings</option>
+              <option value="bracelet">Bracelets</option>
+              <option value="uncategorized">Uncategorized</option>
+            </select>
             <select value={sortBy} onChange={(e) => setSortBy(e.target.value as typeof sortBy)} className="rounded-md border px-2 py-2 text-sm hidden sm:block">
               <option value="title-asc">Title A–Z</option>
               <option value="title-desc">Title Z–A</option>
@@ -566,6 +593,7 @@ export default function AdminPage() {
                     <div className="min-w-0 flex flex-col">
                       <div className="flex items-center gap-3">
                         <div className="font-medium truncate" title={it.title}>{it.title}</div>
+                        {it.category && <div className="text-[11px] px-2 py-0.5 rounded bg-blue-100 text-blue-800 capitalize">{it.category}</div>}
                         {it.featured ? <div className="ml-2 text-[11px] px-2 py-0.5 rounded bg-amber-100 text-amber-800">Featured</div> : null}
                         <div className="ml-auto hidden sm:block text-xs text-muted">{formatPKR(it.price)} · <span className={it.inStock ? "text-emerald-600" : "text-rose-600"}>{it.inStock ? "In stock" : "Out of stock"}</span>{it.onSale ? " · SALE" : ""}</div>
                       </div>
@@ -614,6 +642,7 @@ export default function AdminPage() {
                               ) : null}
                             </div>
                             <div className="font-medium truncate max-w-[280px]" title={it.title}>{it.title}</div>
+                            {it.category && <div className="text-[11px] px-2 py-0.5 rounded bg-blue-100 text-blue-800 capitalize">{it.category}</div>}
                             {it.featured ? <div className="ml-2 text-[11px] px-2 py-0.5 rounded bg-amber-100 text-amber-800">Featured</div> : null}
                           </div>
                         </td>
@@ -873,6 +902,14 @@ export default function AdminPage() {
 
               <label className="text-xs text-muted">Description</label>
               <textarea value={form.description || ""} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Add product details, materials, dimensions..." className="min-h-28 rounded-md border px-3 py-2" />
+
+              <label className="text-xs text-muted">Category</label>
+              <select value={form.category || ""} onChange={(e) => setForm({ ...form, category: e.target.value })} className="rounded-md border px-3 py-2">
+                <option value="">Select category...</option>
+                <option value="gemstone">Gemstone</option>
+                <option value="ring">Ring</option>
+                <option value="bracelet">Bracelet</option>
+              </select>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>

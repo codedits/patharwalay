@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import ThemeToggle from "./ThemeToggle";
 
 export default function Header() {
@@ -8,6 +8,10 @@ export default function Header() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [productsOpen, setProductsOpen] = useState(false);
+  const productsRef = useRef<HTMLDivElement | null>(null);
+
+  const closeProducts = useCallback(() => setProductsOpen(false), []);
 
   useEffect(() => {
     setMounted(true);
@@ -15,6 +19,24 @@ export default function Header() {
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  // Close dropdown on outside click or Escape
+  useEffect(() => {
+    function onDocClick(e: MouseEvent) {
+      if (!productsRef.current) return;
+      if (productsRef.current.contains(e.target as Node)) return;
+      setProductsOpen(false);
+    }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setProductsOpen(false);
+    }
+    document.addEventListener("click", onDocClick);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("click", onDocClick);
+      document.removeEventListener("keydown", onKey);
+    };
   }, []);
 
   return (
@@ -35,7 +57,24 @@ export default function Header() {
           </div>
           <nav className="flex items-center gap-6 text-sm opacity-90">
             <Link href="/" className="nav-link">Home</Link>
-            <Link href="/products" className="nav-link">Products</Link>
+            <div className="relative" ref={productsRef}>
+              <button
+                aria-haspopup="true"
+                aria-expanded={productsOpen}
+                onClick={() => setProductsOpen((v) => !v)}
+                onKeyDown={(e) => { if (e.key === 'ArrowDown' || e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setProductsOpen(true); } }}
+                className="nav-link"
+              >
+                Products ▾
+              </button>
+              <div className={`absolute left-0 mt-2 w-44 rounded-md border bg-background shadow-lg ${productsOpen ? 'block' : 'hidden'}`}>
+                <div className="py-1">
+                  <Link href="/gemstones" className="block px-4 py-2 text-sm hover:bg-black/5">Gemstones</Link>
+                  <Link href="/rings" className="block px-4 py-2 text-sm hover:bg-black/5">Rings</Link>
+                  <Link href="/bracelets" className="block px-4 py-2 text-sm hover:bg-black/5">Bracelets</Link>
+                </div>
+              </div>
+            </div>
             <Link href="#about" className="nav-link">About</Link>
             <Link href="#contact" className="nav-link">Contact</Link>
             <Link href="/admin" className="nav-link">Admin</Link>
@@ -66,7 +105,14 @@ export default function Header() {
         <div className="md:hidden px-4 py-3 space-y-3 border-t border-black/10 dark:border-white/10">
           <nav className="flex flex-col gap-2 text-foreground opacity-90">
             <Link href="/" className="nav-link">Home</Link>
-            <Link href="/products" className="nav-link">Products</Link>
+            <div className="pl-2">
+              <div className="text-sm font-medium">Products</div>
+              <nav className="flex flex-col pl-2 mt-1">
+                <Link href="/gemstones" className="nav-link">Gemstones</Link>
+                <Link href="/rings" className="nav-link">Rings</Link>
+                <Link href="/bracelets" className="nav-link">Bracelets</Link>
+              </nav>
+            </div>
             <a href="#about" className="nav-link">About</a>
             <a href="#contact" className="nav-link">Contact</a>
             <Link href="/admin" className="nav-link">Admin</Link>

@@ -21,7 +21,7 @@ export default function Showcase() {
       <section className="space-y-6">
         <Reveal delay={120}>
           <Link
-            href="/products?collection=rings"
+            href="/rings"
             aria-label="Shop Rings"
             className="group relative block full-bleed h-[48vh] sm:h-[56vh] md:h-[64vh] overflow-hidden"
           >
@@ -35,16 +35,18 @@ export default function Showcase() {
             blurDataURL={createBlurDataURL()}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-          <div className="absolute bottom-6 left-6 text-white drop-shadow">
-            <div className="text-xl sm:text-2xl font-semibold tracking-wide uppercase">Rings</div>
-            <span className="inline-block mt-1 text-xs underline underline-offset-4">Shop now</span>
+          <div className="absolute inset-0 flex items-center justify-center text-center text-white drop-shadow px-4">
+            <div>
+              <div className="text-xl sm:text-2xl font-semibold tracking-wide uppercase">Rings</div>
+              <span className="inline-block mt-1 text-xs underline underline-offset-4">Shop now</span>
+            </div>
           </div>
           </Link>
         </Reveal>
 
         <Reveal delay={200}>
           <Link
-            href="/products?collection=gemstones"
+            href="/gemstones"
             aria-label="Explore Gemstones"
             className="group relative block full-bleed h-[48vh] sm:h-[56vh] md:h-[64vh] overflow-hidden"
           >
@@ -58,17 +60,19 @@ export default function Showcase() {
             blurDataURL={createBlurDataURL()}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-          <div className="absolute bottom-6 left-6 text-white drop-shadow">
-            <div className="text-xl sm:text-2xl font-semibold tracking-wide uppercase">Gemstones</div>
-            <span className="inline-block mt-1 text-xs underline underline-offset-4">Explore</span>
+          <div className="absolute inset-0 flex items-center justify-center text-center text-white drop-shadow px-4">
+            <div>
+              <div className="text-xl sm:text-2xl font-semibold tracking-wide uppercase">Gemstones</div>
+              <span className="inline-block mt-1 text-xs underline underline-offset-4">Explore</span>
+            </div>
           </div>
           </Link>
         </Reveal>
 
         <Reveal delay={280}>
           <Link
-            href="/products?collection=necklaces"
-            aria-label="Discover Necklaces"
+            href="/bracelets"
+            aria-label="Discover Bracelets"
             className="group relative block full-bleed h-[48vh] sm:h-[56vh] md:h-[64vh] overflow-hidden"
           >
           <Image
@@ -81,9 +85,11 @@ export default function Showcase() {
             blurDataURL={createBlurDataURL()}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-          <div className="absolute bottom-6 left-6 text-white drop-shadow">
-            <div className="text-xl sm:text-2xl font-semibold tracking-wide uppercase">Necklaces</div>
-            <span className="inline-block mt-1 text-xs underline underline-offset-4">Discover</span>
+          <div className="absolute inset-0 flex items-center justify-center text-center text-white drop-shadow px-4">
+            <div>
+              <div className="text-xl sm:text-2xl font-semibold tracking-wide uppercase">Bracelets</div>
+              <span className="inline-block mt-1 text-xs underline underline-offset-4">Discover</span>
+            </div>
           </div>
           </Link>
         </Reveal>
@@ -107,7 +113,7 @@ export default function Showcase() {
             <h3 className="lux-heading text-xl sm:text-2xl font-semibold">Crafted by Hand, Designed to Last</h3>
             <p className="text-muted mt-3">Our artisans bring decades of expertise to each piece — pairing ethically sourced gemstones with high-precision settings to ensure brilliance that stands the test of time.</p>
             <div className="mt-6">
-              <Link href="/products" className="btn-glass rounded-md px-6 py-3">Explore the collection</Link>
+              <Link href="/gemstones" className="btn-glass rounded-md px-6 py-3">Explore the collection</Link>
             </div>
           </div>
         </section>
