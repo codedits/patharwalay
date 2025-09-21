@@ -8,17 +8,16 @@ export default function Showcase() {
     <div className="space-y-16">
       {/* Storytelling blurb */}
       <Reveal delay={40}>
-        <section className="mx-auto max-w-4xl px-6 text-center space-y-4">
-          <h2 className="lux-heading text-2xl sm:text-3xl font-semibold tracking-tight">A Legacy of Elegance</h2>
+        <section className="mx-auto max-w-4xl px-6 text-center space-y-4" >
+          <h2 className="lux-heading text-2xl sm:text-3xl font-semibold tracking-tight">Explore Categories</h2>
           <p className="text-muted max-w-2xl mx-auto">
-            Every piece tells a story — crafted with precision, designed for timeless beauty, and
-            made to be cherished for generations.
+            The Finest Jewllery Crafted to Last a Lifetime
           </p>
         </section>
       </Reveal>
 
       {/* Full-width stacked categories */}
-      <section className="space-y-6">
+      <section className="space-y-0">
         <Reveal delay={120}>
           <Link
             href="/rings"
@@ -95,31 +94,8 @@ export default function Showcase() {
         </Reveal>
       </section>
 
-      {/* Split image with copy */}
-      <Reveal delay={360}>
-        <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-          <div className="relative aspect-[4/3] rounded-xl overflow-hidden order-2 lg:order-1">
-            <Image
-              src="ring-2522609_1920.jpg"
-              alt="Artisan setting gemstones"
-              fill
-              sizes={imageSizes.split}
-              className="object-cover cover-mobile"
-              {...imageProps.lazy}
-              blurDataURL={createBlurDataURL()}
-            />
-          </div>
-          <div className="order-1 lg:order-2">
-            <h3 className="lux-heading text-xl sm:text-2xl font-semibold">Crafted by Hand, Designed to Last</h3>
-            <p className="text-muted mt-3">Our artisans bring decades of expertise to each piece — pairing ethically sourced gemstones with high-precision settings to ensure brilliance that stands the test of time.</p>
-            <div className="mt-6">
-              <Link href="/gemstones" className="btn-glass rounded-md px-6 py-3">Explore the collection</Link>
-            </div>
-          </div>
-        </section>
-      </Reveal>
-
-      {/* Wide banner */}
+      
+      
       
     </div>
   );
