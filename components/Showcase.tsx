@@ -8,7 +8,7 @@ export default function Showcase() {
     <div className="space-y-16">
       {/* Storytelling blurb */}
       <Reveal delay={40}>
-        <section className="mx-auto max-w-4xl px-6 text-center space-y-4" >
+        <section className="mx-auto max-w-4xl px-6 text-center space-y-4 fade-in" >
           <h2 className="lux-heading text-2xl sm:text-3xl font-semibold tracking-tight">Explore Categories</h2>
           <p className="text-muted max-w-2xl mx-auto">
             The Finest Jewllery Crafted to Last a Lifetime
@@ -41,7 +41,7 @@ export default function Showcase() {
             </div>
           </div>
           </Link>
-        </Reveal>
+  </Reveal>
 
         <Reveal delay={200}>
           <Link
@@ -66,7 +66,7 @@ export default function Showcase() {
             </div>
           </div>
           </Link>
-        </Reveal>
+  </Reveal>
 
         <Reveal delay={280}>
           <Link
@@ -91,7 +91,7 @@ export default function Showcase() {
             </div>
           </div>
           </Link>
-        </Reveal>
+  </Reveal>
       </section>
 
       

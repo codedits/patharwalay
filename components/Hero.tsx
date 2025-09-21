@@ -12,7 +12,7 @@ export default function Hero({ imageUrl, headline, tagline, showCta = true, alig
     ? "h-[70vh]"
     : "h-[48vh] sm:h-[56vh] md:h-[64vh]";
   return (
-    <section className="relative overflow-hidden full-bleed border-b border-black/10 dark:border-white/10">
+    <section className="relative overflow-hidden full-bleed border-b border-black/10 dark:border-white/10 fade-in">
     {imageUrl ? (
         <Image
           // Use responsive transforms: smaller on mobile, larger on desktop
@@ -30,7 +30,7 @@ export default function Hero({ imageUrl, headline, tagline, showCta = true, alig
       )}
       <div className="pointer-events-none absolute inset-0 bg-black/30 dark:bg-black/50" />
       <div className={align === "center" ? "absolute inset-0 flex items-center" : "absolute inset-x-0 bottom-0"}>
-        <div className={`mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 pb-8 sm:pb-10 md:pb-12 ${align === "center" ? "flex flex-col items-center text-center" : ""}`}>
+  <div className={`mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 pb-8 sm:pb-10 md:pb-12 ${align === "center" ? "flex flex-col items-center text-center" : ""} fade-in`}>
           <h1 className={`lux-heading ${size === "lg" ? "text-4xl sm:text-5xl md:text-6xl" : "text-3xl sm:text-4xl md:text-5xl"} font-semibold text-white tracking-tight drop-shadow-[0_2px_10px_rgba(0,0,0,0.6)] max-w-3xl ${align === "center" ? "text-center mx-auto" : ""}`}>{headline || "Timeless Gems, Modern Elegance"}</h1>
           <p className={`mt-4 max-w-xl text-white/90 ${size === "lg" ? "text-base sm:text-lg" : "text-sm sm:text-base"} ${align === "center" ? "text-center mx-auto" : ""}`}>{tagline || "Handpicked gemstones set with precision—crafted to be worn, loved, and passed down."}</p>
          
