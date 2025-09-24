@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/db";
 import { SiteSettings } from "@/models/SiteSettings";
-import cloudinaryImport from "cloudinary";
+// cloudinary is only needed for PUT (image cleanup). Lazy-load it there
 import { ensureAdmin } from "@/lib/auth";
 
 export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
+export const dynamic = "auto";
 
 export async function GET() {
   await connectToDatabase();
@@ -23,17 +23,28 @@ export async function GET() {
   if (anyDoc.admin_pass) delete anyDoc.admin_pass;
   return anyDoc;
   })();
-  return NextResponse.json(normalized);
+  return NextResponse.json(normalized, {
+    headers: {
+      // Allow CDN / proxy caching for a short period to reduce TTFB for
+      // repeated public requests. Stale-while-revalidate lets the CDN
+      // serve slightly stale content while revalidation happens in the
+      // background.
+      "Cache-Control": "public, s-maxage=60, stale-while-revalidate=30",
+    },
+  });
 }
 
-type CloudinaryV2 = typeof cloudinaryImport.v2;
-const cloudinary: CloudinaryV2 = (cloudinaryImport as unknown as { v2: CloudinaryV2 }).v2;
-cloudinary.config({ secure: true });
+// Cloudinary is lazy-loaded in the PUT handler to avoid impacting GET
 
 export async function PUT(req: Request) {
   const guard = await ensureAdmin(req);
   if (guard) return guard;
   await connectToDatabase();
+  // Lazy-load cloudinary to avoid adding its startup cost to GET (public) requests
+  const cloudinaryImport = await import("cloudinary");
+  type CloudinaryV2 = typeof cloudinaryImport.v2;
+  const cloudinary: CloudinaryV2 = (cloudinaryImport as unknown as { v2: CloudinaryV2 }).v2;
+  cloudinary.config({ secure: true });
   const raw = await req.json().catch(() => null);
   if (!raw || typeof raw !== "object") {
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 });

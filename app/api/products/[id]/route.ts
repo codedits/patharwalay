@@ -2,16 +2,14 @@ import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/db";
 import { Product } from "@/models/Product";
 import type { IProduct } from "@/models/Product";
-import cloudinaryImport from "cloudinary";
+// Cloudinary SDK is only needed for deletion/cleanup; lazy-load in handlers
 import { ensureAdmin } from "@/lib/auth";
 import { sanitizeProductInput } from "@/lib/validation";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-type CloudinaryV2 = typeof cloudinaryImport.v2;
-const cloudinary: CloudinaryV2 = (cloudinaryImport as unknown as { v2: CloudinaryV2 }).v2;
-cloudinary.config({ secure: true });
+// cloudinary will be imported on-demand inside handlers below
 
 function getCloudinaryPublicIdFromUrl(url: string): string | null {
   try {
@@ -101,6 +99,10 @@ export async function PUT(req: Request, { params }: Params) {
       ));
       if (ids.length) {
         console.info("Cloudinary: deleting (update) public ids:", ids);
+        const cloudinaryImport = await import("cloudinary");
+        type CloudinaryV2 = typeof cloudinaryImport.v2;
+        const cloudinary: CloudinaryV2 = (cloudinaryImport as unknown as { v2: CloudinaryV2 }).v2;
+        cloudinary.config({ secure: true });
         await Promise.all(ids.map((pid) => cloudinary.uploader.destroy(pid, { resource_type: "image", invalidate: true }).catch((e: unknown) => console.warn("Cloudinary delete (update) failed:", pid, e))));
       }
     }
@@ -129,6 +131,10 @@ export async function DELETE(req: Request, { params }: Params) {
       ));
       if (ids.length) {
         console.info("Cloudinary: deleting (delete) public ids:", ids);
+        const cloudinaryImport = await import("cloudinary");
+        type CloudinaryV2 = typeof cloudinaryImport.v2;
+        const cloudinary: CloudinaryV2 = (cloudinaryImport as unknown as { v2: CloudinaryV2 }).v2;
+        cloudinary.config({ secure: true });
         await Promise.all(ids.map((pid) => cloudinary.uploader.destroy(pid, { resource_type: "image", invalidate: true }).catch((e: unknown) => console.warn("Cloudinary delete (delete) failed:", pid, e))));
       }
     } catch (e) {

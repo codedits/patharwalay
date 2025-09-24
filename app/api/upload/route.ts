@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import cloudinaryImport from "cloudinary";
+// Cloudinary is only needed during uploads; lazy-load inside the handler
 import { ensureAdmin } from "@/lib/auth";
 
 // Ensure this route runs in Node.js (not Edge) so Buffer and Cloudinary SDK work reliably
@@ -11,24 +11,23 @@ export const maxDuration = 60;
 
 // Minimal Cloudinary typings to avoid `any` while staying compatible with installed types
 type CloudinaryUploadResult = { secure_url?: string; secureUrl?: string; url?: string } & Record<string, unknown>;
-type CloudinaryV2 = {
-  config: (cfg: { secure?: boolean } & Record<string, unknown>) => void;
-  uploader: {
-    upload_stream: (
-      opts: { resource_type?: string; folder?: string } & Record<string, unknown>,
-      cb: (error: unknown, result: CloudinaryUploadResult | undefined) => void
-    ) => NodeJS.WritableStream;
-  };
-};
-const cloudinary = (cloudinaryImport as unknown as { v2: CloudinaryV2 }).v2;
-
-// Cloudinary Node SDK automatically reads CLOUDINARY_URL from env.
-// We only enforce secure URLs here. Avoid passing an unsupported key like `cloudinary_url`.
-cloudinary.config({ secure: true });
 
 export async function POST(req: Request) {
   const guard = await ensureAdmin(req);
   if (guard) return guard;
+  // Lazy-load cloudinary SDK to avoid initializing it on every cold start
+  const cloudinaryImport = await import("cloudinary");
+  type CloudinaryV2 = {
+    config: (cfg: { secure?: boolean } & Record<string, unknown>) => void;
+    uploader: {
+      upload_stream: (
+        opts: { resource_type?: string; folder?: string } & Record<string, unknown>,
+        cb: (error: unknown, result: CloudinaryUploadResult | undefined) => void
+      ) => NodeJS.WritableStream;
+    };
+  };
+  const cloudinary = (cloudinaryImport as unknown as { v2: CloudinaryV2 }).v2;
+  cloudinary.config({ secure: true });
   try {
     const contentType = req.headers.get("content-type") || "";
     if (!contentType.includes("multipart/form-data")) {
