@@ -20,9 +20,11 @@ export default function Hero({ imageUrl, headline, tagline, showCta = true, alig
           alt="Gemstone banner"
           width={1920}
           height={960}
-          {...imageProps.critical}
+          priority
+          fetchPriority="high"
+          placeholder="blur"
           blurDataURL={createBlurDataURL(40, 20)}
-          sizes={imageSizes.fullBleed}
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 100vw"
           className={`${heightClass} w-full object-cover`}
         />
       ) : (

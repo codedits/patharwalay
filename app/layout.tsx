@@ -74,8 +74,18 @@ export default function RootLayout({
   return (
   <html lang="en" suppressHydrationWarning>
       <head>
-        {/* Speed up first connection to Cloudinary (image CDN) */}
+        {/* DNS prefetch and preconnect for faster resource loading */}
         <link rel="preconnect" href="https://res.cloudinary.com" crossOrigin="anonymous" />
+        <link rel="preconnect" href="https://images.unsplash.com" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+        
+        {/* Preload critical resources for faster navigation */}
+        <link rel="preload" href="/api/settings" as="fetch" crossOrigin="anonymous" />
+        <link rel="prefetch" href="/api/products" />
+        <link rel="prefetch" href="/gemstones" />
+        <link rel="prefetch" href="/rings" />
+        <link rel="prefetch" href="/bracelets" />
+        
         {/* Canonical + SEO helpers */}
         <link rel="canonical" href={siteUrl} />
         <meta name="keywords" content="gemstones, jewelry, handcrafted jewelry, ruby, emerald, sapphire, opal, Patthar Walay" />

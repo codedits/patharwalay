@@ -28,9 +28,11 @@ export default function Showcase() {
             src="ring-2405145_1920.jpg"
             alt="Emerald ring in velvet box"
             fill
-            sizes={imageSizes.fullBleed}
+            priority
+            fetchPriority="high"
+            placeholder="blur"
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 100vw"
             className="object-cover cover-mobile transition-transform duration-300 group-hover:scale-105"
-            {...imageProps.lazy}
             blurDataURL={createBlurDataURL()}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
@@ -53,9 +55,10 @@ export default function Showcase() {
             src="herp.jpg"
             alt="Loose gemstones in natural light"
             fill
-            sizes={imageSizes.fullBleed}
+            loading="lazy"
+            placeholder="blur"
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 100vw"
             className="object-cover cover-mobile transition-transform duration-300 group-hover:scale-105"
-            {...imageProps.lazy}
             blurDataURL={createBlurDataURL()}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
@@ -78,9 +81,10 @@ export default function Showcase() {
             src="https://images.unsplash.com/photo-1543294001-f7cd5d7fb516?q=80&w=2000&auto=format&fit=crop&ixlib=rb-4.0.3"
             alt="Necklace on minimal sculpture"
             fill
-            sizes={imageSizes.fullBleed}
+            loading="lazy"
+            placeholder="blur"
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 100vw"
             className="object-cover cover-mobile transition-transform duration-300 group-hover:scale-105"
-            {...imageProps.lazy}
             blurDataURL={createBlurDataURL()}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />

@@ -99,9 +99,9 @@ export default function Header() {
               </button>
               <div className={`absolute left-0 mt-2 w-44 rounded-md border bg-background shadow-lg ${productsOpen ? 'block' : 'hidden'}`}>
                 <div className="py-1">
-                  <Link href="/gemstones" className="block px-4 py-2 text-sm hover:bg-black/5">Gemstones</Link>
-                  <Link href="/rings" className="block px-4 py-2 text-sm hover:bg-black/5">Rings</Link>
-                  <Link href="/bracelets" className="block px-4 py-2 text-sm hover:bg-black/5">Bracelets</Link>
+                  <Link href="/gemstones" className="block px-4 py-2 text-sm hover:bg-black/5" onMouseEnter={() => { if (typeof window !== 'undefined') { const link = document.createElement('link'); link.rel = 'prefetch'; link.href = '/gemstones'; document.head.appendChild(link); } }}>Gemstones</Link>
+                  <Link href="/rings" className="block px-4 py-2 text-sm hover:bg-black/5" onMouseEnter={() => { if (typeof window !== 'undefined') { const link = document.createElement('link'); link.rel = 'prefetch'; link.href = '/rings'; document.head.appendChild(link); } }}>Rings</Link>
+                  <Link href="/bracelets" className="block px-4 py-2 text-sm hover:bg-black/5" onMouseEnter={() => { if (typeof window !== 'undefined') { const link = document.createElement('link'); link.rel = 'prefetch'; link.href = '/bracelets'; document.head.appendChild(link); } }}>Bracelets</Link>
                 </div>
               </div>
             </div>
@@ -160,9 +160,9 @@ export default function Header() {
                   </button>
                   <div className={`pl-3 mt-2 ${mobileProductsOpen ? 'block' : 'hidden'}`}>
                     <nav className="flex flex-col gap-2">
-                      <Link href="/gemstones" className="nav-link" onClick={() => setOpen(false)}>Gemstones</Link>
-                      <Link href="/rings" className="nav-link" onClick={() => setOpen(false)}>Rings</Link>
-                      <Link href="/bracelets" className="nav-link" onClick={() => setOpen(false)}>Bracelets</Link>
+                      <Link href="/gemstones" className="nav-link" onClick={() => setOpen(false)} onMouseEnter={() => { if (typeof window !== 'undefined') { const link = document.createElement('link'); link.rel = 'prefetch'; link.href = '/gemstones'; document.head.appendChild(link); } }}>Gemstones</Link>
+                      <Link href="/rings" className="nav-link" onClick={() => setOpen(false)} onMouseEnter={() => { if (typeof window !== 'undefined') { const link = document.createElement('link'); link.rel = 'prefetch'; link.href = '/rings'; document.head.appendChild(link); } }}>Rings</Link>
+                      <Link href="/bracelets" className="nav-link" onClick={() => setOpen(false)} onMouseEnter={() => { if (typeof window !== 'undefined') { const link = document.createElement('link'); link.rel = 'prefetch'; link.href = '/bracelets'; document.head.appendChild(link); } }}>Bracelets</Link>
                     </nav>
                   </div>
                 </div>

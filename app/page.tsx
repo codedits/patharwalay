@@ -5,6 +5,7 @@ import { SiteSettings } from "@/models/SiteSettings";
 import type { Metadata } from "next";
 
 export const dynamic = "auto";
+
 // About and Contact sections removed from the main page
 import { Product } from "@/models/Product";
 import Showcase from "@/components/Showcase";

@@ -142,9 +142,10 @@ export default function ProductDetailClient({ product, initialBlurDataURL }: { p
                   alt={`${title} ${index + 1}`}
                   fill
                   priority={index === 0}
+                  fetchPriority={index === 0 ? "high" : "low"}
                   placeholder={blurDataUrl ? "blur" : undefined}
                   blurDataURL={blurDataUrl}
-                  sizes="(min-width: 1024px) 600px, (min-width: 768px) 50vw, 100vw"
+                  sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 600px"
                   className="object-cover"
                 />
                 <button className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/45 hover:bg-black/60 text-white rounded-full w-8 h-8 flex items-center justify-center shadow-sm" onClick={prev} aria-label="Previous">‹</button>
@@ -159,7 +160,14 @@ export default function ProductDetailClient({ product, initialBlurDataURL }: { p
               {images.map((img, i) => (
         <button key={img} onClick={() => setIndex(i)} className={`rounded overflow-hidden border ${i === index ? "ring-2 ring-black/20 dark:ring-white/30" : "border-black/10 dark:border-white/10"}`}>
                   <div style={{ width: 80, height: 120, position: "relative" }}>
-            <Image src={polishImageUrl(img, ["c_fill", "g_auto", "w_160", "h_240"]) } alt={`thumb-${i}`} fill sizes="80px" className="object-cover transition-transform duration-200 ease-out hover:scale-105 active:scale-95" />
+            <Image 
+              src={polishImageUrl(img, ["c_fill", "g_auto", "w_160", "h_240"]) } 
+              alt={`thumb-${i}`} 
+              fill 
+              loading="lazy"
+              sizes="80px" 
+              className="object-cover transition-transform duration-200 ease-out hover:scale-105 active:scale-95" 
+            />
                   </div>
                 </button>
               ))}

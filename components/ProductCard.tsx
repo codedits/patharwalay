@@ -18,16 +18,17 @@ export default function ProductCard({ product, blurDataURL }: { product: unknown
   return (
   <a href={`/products/${href}`} className="block w-full no-underline font-poppins border border-white/20 dark:border-black/20 ">
       <div className="w-full bg-transparent">
-  <div className="w-full h-48 sm:aspect-[4/3] sm:h-auto relative bg-gray-100 dark:bg-slate-800 overflow-hidden">
+        <div className="w-full h-48 sm:aspect-[4/3] sm:h-auto relative bg-gray-100 dark:bg-slate-800 overflow-hidden">
           {imgSrc ? (
             <Image
               src={imgSrc}
               alt={title}
               fill
-              sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
+              loading="lazy"
               placeholder={blurDataURL ? "blur" : "empty"}
               blurDataURL={blurDataURL}
-              className="object-cover w-full h-full"
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+              className="object-cover w-full h-full transition-transform duration-300 hover:scale-105"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-black/60 dark:text-gray-300">No image</div>
