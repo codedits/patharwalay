@@ -5,10 +5,15 @@ import ThemeToggle from "./ThemeToggle";
 
 export default function Header() {
   const [open, setOpen] = useState(false);
+  const [menuMounted, setMenuMounted] = useState(false);
+  const [menuVisible, setMenuVisible] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [productsOpen, setProductsOpen] = useState(false);
+  const [mobileProductsOpen, setMobileProductsOpen] = useState(false);
+  const [mobileAboutOpen, setMobileAboutOpen] = useState(false);
+  const [mobileContactOpen, setMobileContactOpen] = useState(false);
   const productsRef = useRef<HTMLDivElement | null>(null);
 
   const closeProducts = useCallback(() => setProductsOpen(false), []);
@@ -20,6 +25,31 @@ export default function Header() {
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  // control mount/visibility for off-canvas menu so we can animate in/out
+  useEffect(() => {
+    let timeout: number | undefined;
+    if (open) {
+      setMenuMounted(true);
+      // next tick allow transition to run
+      timeout = window.setTimeout(() => setMenuVisible(true), 20);
+    } else {
+      setMenuVisible(false);
+      // wait for exit transition before unmounting
+      timeout = window.setTimeout(() => setMenuMounted(false), 300);
+    }
+    return () => { if (timeout) clearTimeout(timeout); };
+  }, [open]);
+
+  // lock body scroll while menu open
+  useEffect(() => {
+    if (menuMounted) {
+      const prev = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => { document.body.style.overflow = prev; };
+    }
+    return;
+  }, [menuMounted]);
 
   // Close dropdown on outside click or Escape
   useEffect(() => {
@@ -101,22 +131,73 @@ export default function Header() {
           </div>
         </div>
       </nav>
-      {open && (
-        <div className="md:hidden px-4 py-3 space-y-3 border-t border-black/10 dark:border-white/10">
-          <nav className="flex flex-col gap-2 text-foreground opacity-90">
-            <Link href="/" className="nav-link">Home</Link>
-            <div className="pl-2">
-              <div className="text-sm font-medium">Products</div>
-              <nav className="flex flex-col pl-2 mt-1">
-                <Link href="/gemstones" className="nav-link">Gemstones</Link>
-                <Link href="/rings" className="nav-link">Rings</Link>
-                <Link href="/bracelets" className="nav-link">Bracelets</Link>
+      {/* Mobile off-canvas menu */}
+      {menuMounted && (
+        <div className="md:hidden relative z-40">
+          {/* Backdrop */}
+          <div
+            aria-hidden
+            onClick={() => setOpen(false)}
+            className={`fixed inset-0 bg-black/40 transition-opacity ${menuVisible ? 'opacity-100' : 'opacity-0'}`}
+          />
+          {/* Sliding panel (from left) */}
+          <aside className={`fixed left-0 top-0 h-full w-80 max-w-[90vw] bg-background border-r border-black/10 dark:border-white/10 shadow-xl transform transition-transform duration-300 ${menuVisible ? 'translate-x-0' : '-translate-x-full'}`} role="dialog" aria-modal="true">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-black/5">
+              <div className="text-lg font-semibold">Menu</div>
+              <button aria-label="Close menu" onClick={() => setOpen(false)} className="h-9 w-9 inline-flex items-center justify-center rounded-md border border-black/10 dark:border-white/15 hover:bg-black/5 dark:hover:bg-white/5">
+                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
+              </button>
+            </div>
+            <div className="px-4 py-4 space-y-4">
+              <nav className="flex flex-col gap-3 text-foreground opacity-95">
+                <Link href="/" className="nav-link" onClick={() => setOpen(false)}>Home</Link>
+
+                {/* Mobile expandable Products */}
+                <div>
+                  <button className="w-full flex items-center justify-between text-left nav-link" onClick={() => setMobileProductsOpen((v) => !v)}>
+                    <span>Products</span>
+                    <span className="text-sm">{mobileProductsOpen ? '−' : '+'}</span>
+                  </button>
+                  <div className={`pl-3 mt-2 ${mobileProductsOpen ? 'block' : 'hidden'}`}>
+                    <nav className="flex flex-col gap-2">
+                      <Link href="/gemstones" className="nav-link" onClick={() => setOpen(false)}>Gemstones</Link>
+                      <Link href="/rings" className="nav-link" onClick={() => setOpen(false)}>Rings</Link>
+                      <Link href="/bracelets" className="nav-link" onClick={() => setOpen(false)}>Bracelets</Link>
+                    </nav>
+                  </div>
+                </div>
+
+                {/* About expandable */}
+                <div>
+                  <button className="w-full flex items-center justify-between text-left nav-link" onClick={() => setMobileAboutOpen((v) => !v)}>
+                    <span>About</span>
+                    <span className="text-sm">{mobileAboutOpen ? '−' : '+'}</span>
+                  </button>
+                  <div className={`pl-3 mt-2 text-sm text-muted ${mobileAboutOpen ? 'block' : 'hidden'}`}>
+                    <p className="mb-2">Patthar Walay curates ethically sourced gemstones and handcrafted jewelry. We work directly with miners and artisans to ensure fair practices and high-quality gems.</p>
+                    <p className="mb-2">Each piece is inspected and finished by hand. We focus on timeless designs and transparent sourcing — learn more on our About page.</p>
+                    <p className="text-xs text-muted">Shipping worldwide • 30-day returns • Certificate of authenticity on selected items</p>
+                  </div>
+                </div>
+
+                {/* Contact expandable */}
+                <div>
+                  <button className="w-full flex items-center justify-between text-left nav-link" onClick={() => setMobileContactOpen((v) => !v)}>
+                    <span>Contact</span>
+                    <span className="text-sm">{mobileContactOpen ? '−' : '+'}</span>
+                  </button>
+                  <div className={`pl-3 mt-2 text-sm text-muted ${mobileContactOpen ? 'block' : 'hidden'}`}>
+                    <p className="mb-1">Customer service hours: Mon–Sat, 9am–6pm (PKT)</p>
+                    <p className="mb-1">Phone: <a className="underline" href="tel:+923001234567">+92 300 1234567</a></p>
+                    <p className="mb-1">Email: <a className="underline" href="mailto:hello@pattharwalay.example">hello@pattharwalay.example</a></p>
+                    <p className="text-xs text-muted">Follow us on Instagram for new arrivals and behind-the-scenes updates.</p>
+                  </div>
+                </div>
+
+                <Link href="/admin" className="nav-link" onClick={() => setOpen(false)}>Admin</Link>
               </nav>
             </div>
-            <a href="#about" className="nav-link">About</a>
-            <a href="#contact" className="nav-link">Contact</a>
-            <Link href="/admin" className="nav-link">Admin</Link>
-          </nav>
+          </aside>
         </div>
       )}
 
